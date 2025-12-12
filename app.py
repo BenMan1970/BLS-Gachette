@@ -5,7 +5,7 @@ import oandapyV20
 import oandapyV20.endpoints.instruments as instruments
 
 # Configuration
-st.set_page_config(page_title="Scanner H1 Diagnostic", layout="wide", page_icon="🔍")
+st.set_page_config(page_title="Scanner M15 Pro", layout="wide", page_icon="⚡")
 
 # ==========================================
 # 1. LISTE DES ACTIFS
@@ -77,7 +77,7 @@ def calculate_ema(series, length):
     return series.ewm(span=length, adjust=False).mean()
 
 def get_rsi_ohlc4(df, length=7):
-    # OHLC4
+    # RSI (O+H+L+C)/4
     ohlc4 = (df['open'] + df['high'] + df['low'] + df['close']) / 4
     delta = ohlc4.diff()
     gain = delta.clip(lower=0).ewm(alpha=1/length, adjust=False).mean()
@@ -94,7 +94,7 @@ def get_colored_hma(df, length=20):
     hma = calculate_wma(raw_hma, int(np.round(np.sqrt(length))))
     
     hma_prev = hma.shift(1)
-    trend_array = np.where(hma > hma_prev, 1, -1) # 1=Vert, -1=Rouge
+    trend_array = np.where(hma > hma_prev, 1, -1)
     trend_series = pd.Series(trend_array, index=df.index)
     return hma, trend_series
 
@@ -112,10 +112,10 @@ def get_bluestar_trend(df):
     return 1 if current_close > current_zlema else -1
 
 # ==========================================
-# 4. LOGIQUE DIAGNOSTIC (SCAN H1)
+# 4. LOGIQUE DIAGNOSTIC (SCAN M15)
 # ==========================================
 
-def scan_h1_debug(api):
+def scan_m15_debug(api):
     overview_data = []
     
     progress_bar = st.progress(0)
@@ -123,15 +123,15 @@ def scan_h1_debug(api):
     total = len(ASSETS)
     
     for i, symbol in enumerate(ASSETS):
-        status_text.text(f"Analyse H1 : {symbol}...")
+        status_text.text(f"Analyse M15 : {symbol}...")
         progress_bar.progress((i + 1) / total)
         
-        # 1. Données
-        df_h1 = api.get_candles(symbol, "H1")
-        if df_h1.empty: continue
+        # 1. Données M15 (Cible)
+        df_m15 = api.get_candles(symbol, "M15")
+        if df_m15.empty: continue
 
-        # 2. RSI OHLC4 (7)
-        rsi_series = get_rsi_ohlc4(df_h1)
+        # 2. RSI OHLC4 (7) sur M15
+        rsi_series = get_rsi_ohlc4(df_m15)
         curr_rsi = rsi_series.iloc[-1]
         prev_rsi = rsi_series.iloc[-2]
         
@@ -143,19 +143,21 @@ def scan_h1_debug(api):
         if cross_up: cross_status = "⬆️ CROSS UP"
         if cross_down: cross_status = "⬇️ CROSS DOWN"
 
-        # 3. HMA (20) Couleur
-        _, hma_trend = get_colored_hma(df_h1)
-        hma_val = hma_trend.iloc[-1] # 1 ou -1
+        # 3. HMA (20) Couleur sur M15
+        _, hma_trend = get_colored_hma(df_m15)
+        hma_val = hma_trend.iloc[-1] 
         hma_str = "🟢 Verte" if hma_val == 1 else "🔴 Rouge"
 
-        # 4. MTF (H1 + H4 + D1)
+        # 4. MTF (Alignement H1 + H4 + D1)
+        # On vérifie que le signal M15 va dans le sens de la tendance lourde
+        df_h1 = api.get_candles(symbol, "H1")
         df_h4 = api.get_candles(symbol, "H4")
         df_d1 = api.get_candles(symbol, "D")
         
         mtf_status = "N/A"
         mtf_valid = False
         
-        if not df_h4.empty and not df_d1.empty:
+        if not df_h1.empty and not df_h4.empty and not df_d1.empty:
             t_h1 = get_bluestar_trend(df_h1)
             t_h4 = get_bluestar_trend(df_h4)
             t_d1 = get_bluestar_trend(df_d1)
@@ -171,7 +173,7 @@ def scan_h1_debug(api):
             elif cross_down and hma_val == -1 and score <= -2:
                 mtf_valid = True
         
-        # Résultat final pour cette paire
+        # Résultat
         signal_final = "❌"
         if mtf_valid:
             signal_final = "✅ BUY" if cross_up else "✅ SELL"
@@ -181,7 +183,7 @@ def scan_h1_debug(api):
             "RSI Préc": round(prev_rsi, 2),
             "RSI Act": round(curr_rsi, 2),
             "Etat RSI": cross_status,
-            "HMA": hma_str,
+            "HMA M15": hma_str,
             "Tendance MTF": mtf_status,
             "SIGNAL": signal_final
         })
@@ -194,43 +196,38 @@ def scan_h1_debug(api):
 # 5. AFFICHAGE
 # ==========================================
 
-st.title("Scanner H1 - Diagnostic Complet")
-st.write("Ce tableau affiche l'état de **toutes** les paires, même s'il n'y a pas de signal, pour vérifier la logique.")
+st.title("Scanner M15 - Diagnostic Complet")
+st.caption("Stratégie : RSI(7) M15 Cross 50 + HMA(20) M15 + Alignement MTF (H1/H4/D1)")
 
-if st.button("LANCER LE DIAGNOSTIC H1", type="primary"):
+if st.button("LANCER LE SCAN M15", type="primary"):
     api = OandaClient()
     
-    with st.spinner("Récupération des données H1/H4/D1..."):
-        data = scan_h1_debug(api)
+    with st.spinner("Analyse M15 + Tendances de fond..."):
+        data = scan_m15_debug(api)
     
     if data:
         df = pd.DataFrame(data)
         
-        # MISE EN FORME DU TABLEAU (Correction Visuelle)
+        # Style
         def style_dataframe(row):
-            # 1. Signaux Valides (Fond Vert/Rouge, Texte Noir/Blanc)
             if "BUY" in row["SIGNAL"]:
                 return ['background-color: #28a745; color: white; font-weight: bold'] * len(row)
             elif "SELL" in row["SIGNAL"]:
                 return ['background-color: #dc3545; color: white; font-weight: bold'] * len(row)
-            
-            # 2. Croisement RSI seul (Fond Jaune, TEXTE NOIR FORCE)
             elif "CROSS" in row["Etat RSI"]:
                 return ['background-color: #fff3cd; color: black; font-weight: bold'] * len(row)
-            
             else:
                 return [''] * len(row)
 
         st.dataframe(
             df.style.apply(style_dataframe, axis=1), 
-            use_container_width=True # Correction du paramètre
+            use_container_width=True
         )
         
-        # Résumé
         signals = [d for d in data if "✅" in d["SIGNAL"]]
         if signals:
-            st.success(f"🎉 {len(signals)} Signal(aux) confirmé(s) !")
+            st.success(f"⚡ {len(signals)} Signal(aux) M15 confirmé(s) !")
         else:
-            st.warning("Aucun signal validé. Regardez les lignes jaunes : ce sont des croisements RSI qui ont échoué à cause de la HMA ou du MTF.")
+            st.warning("Aucun signal validé pour le moment.")
     else:
         st.error("Aucune donnée récupérée.")
