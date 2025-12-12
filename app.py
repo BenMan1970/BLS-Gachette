@@ -3,9 +3,31 @@ import pandas as pd
 import numpy as np
 import oandapyV20
 import oandapyV20.endpoints.instruments as instruments
+from datetime import datetime
 
-# Configuration
-st.set_page_config(page_title="Scanner M15 Pro", layout="wide", page_icon="⚡")
+# ==========================================
+# CONFIGURATION & DESIGN
+# ==========================================
+st.set_page_config(page_title="Bluestar M15 Sniper", layout="centered", page_icon="⚡")
+
+# CSS pour un look épuré
+st.markdown("""
+<style>
+    .stButton>button {
+        width: 100%;
+        border-radius: 10px;
+        height: 3em;
+        font-weight: bold;
+    }
+    .metric-card {
+        background-color: #0E1117;
+        border: 1px solid #30333F;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # ==========================================
 # 1. LISTE DES ACTIFS
@@ -23,7 +45,7 @@ ASSETS = [
 ]
 
 # ==========================================
-# 2. CLIENT API OANDA
+# 2. MOTEUR API
 # ==========================================
 class OandaClient:
     def __init__(self):
@@ -38,7 +60,7 @@ class OandaClient:
 
             self.client = oandapyV20.API(access_token=self.access_token, environment=self.environment)
         except Exception:
-            st.error("⚠️ Erreur Secrets Oanda.")
+            st.error("⚠️ Clés API manquantes dans les secrets.")
             st.stop()
 
     def get_candles(self, instrument, granularity, count=150):
@@ -77,7 +99,6 @@ def calculate_ema(series, length):
     return series.ewm(span=length, adjust=False).mean()
 
 def get_rsi_ohlc4(df, length=7):
-    # RSI (O+H+L+C)/4
     ohlc4 = (df['open'] + df['high'] + df['low'] + df['close']) / 4
     delta = ohlc4.diff()
     gain = delta.clip(lower=0).ewm(alpha=1/length, adjust=False).mean()
@@ -112,122 +133,131 @@ def get_bluestar_trend(df):
     return 1 if current_close > current_zlema else -1
 
 # ==========================================
-# 4. LOGIQUE DIAGNOSTIC (SCAN M15)
+# 4. LOGIQUE SCANNER M15
 # ==========================================
 
-def scan_m15_debug(api):
-    overview_data = []
+def run_sniper_scan(api):
+    signals = []
     
+    # Barre de progression minimaliste
     progress_bar = st.progress(0)
-    status_text = st.empty()
     total = len(ASSETS)
     
     for i, symbol in enumerate(ASSETS):
-        status_text.text(f"Analyse M15 : {symbol}...")
         progress_bar.progress((i + 1) / total)
         
-        # 1. Données M15 (Cible)
+        # 1. Données M15
         df_m15 = api.get_candles(symbol, "M15")
         if df_m15.empty: continue
 
-        # 2. RSI OHLC4 (7) sur M15
+        # 2. RSI OHLC4 (7) - Détection Croisement
         rsi_series = get_rsi_ohlc4(df_m15)
         curr_rsi = rsi_series.iloc[-1]
         prev_rsi = rsi_series.iloc[-2]
         
-        # Détection Cross Strict
         cross_up = prev_rsi < 50 and curr_rsi > 50
         cross_down = prev_rsi > 50 and curr_rsi < 50
         
-        cross_status = "Aucun"
-        if cross_up: cross_status = "⬆️ CROSS UP"
-        if cross_down: cross_status = "⬇️ CROSS DOWN"
+        # Optimisation : Si pas de croisement, on passe direct
+        if not (cross_up or cross_down):
+            continue
 
-        # 3. HMA (20) Couleur sur M15
-        _, hma_trend = get_colored_hma(df_m15)
+        # 3. HMA M15
+        hma, hma_trend = get_colored_hma(df_m15)
         hma_val = hma_trend.iloc[-1] 
-        hma_str = "🟢 Verte" if hma_val == 1 else "🔴 Rouge"
-
-        # 4. MTF (Alignement H1 + H4 + D1)
-        # On vérifie que le signal M15 va dans le sens de la tendance lourde
+        
+        # 4. MTF (Alignement H1/H4/D1)
         df_h1 = api.get_candles(symbol, "H1")
         df_h4 = api.get_candles(symbol, "H4")
         df_d1 = api.get_candles(symbol, "D")
         
-        mtf_status = "N/A"
-        mtf_valid = False
+        if df_h1.empty or df_h4.empty or df_d1.empty: continue
         
-        if not df_h1.empty and not df_h4.empty and not df_d1.empty:
-            t_h1 = get_bluestar_trend(df_h1)
-            t_h4 = get_bluestar_trend(df_h4)
-            t_d1 = get_bluestar_trend(df_d1)
-            score = t_h1 + t_h4 + t_d1
-            
-            if score >= 2: mtf_status = "🐂 BULLISH"
-            elif score <= -2: mtf_status = "🐻 BEARISH"
-            else: mtf_status = "⚪ NEUTRE"
-            
-            # Validation Logic
-            if cross_up and hma_val == 1 and score >= 2:
-                mtf_valid = True
-            elif cross_down and hma_val == -1 and score <= -2:
-                mtf_valid = True
+        score = get_bluestar_trend(df_h1) + get_bluestar_trend(df_h4) + get_bluestar_trend(df_d1)
         
-        # Résultat
-        signal_final = "❌"
-        if mtf_valid:
-            signal_final = "✅ BUY" if cross_up else "✅ SELL"
-
-        overview_data.append({
-            "Symbole": symbol,
-            "RSI Préc": round(prev_rsi, 2),
-            "RSI Act": round(curr_rsi, 2),
-            "Etat RSI": cross_status,
-            "HMA M15": hma_str,
-            "Tendance MTF": mtf_status,
-            "SIGNAL": signal_final
-        })
+        # Validation Finale
+        current_price = df_m15['close'].iloc[-1]
+        
+        if cross_up and hma_val == 1 and score >= 2:
+            signals.append({
+                "symbol": symbol, "type": "BUY", 
+                "price": current_price, "rsi": curr_rsi, 
+                "score": score
+            })
+        elif cross_down and hma_val == -1 and score <= -2:
+            signals.append({
+                "symbol": symbol, "type": "SELL", 
+                "price": current_price, "rsi": curr_rsi, 
+                "score": score
+            })
 
     progress_bar.empty()
-    status_text.empty()
-    return overview_data
+    return signals
 
 # ==========================================
-# 5. AFFICHAGE
+# 5. INTERFACE UTILISATEUR
 # ==========================================
 
-st.title("Scanner M15 - Diagnostic Complet")
-st.caption("Stratégie : RSI(7) M15 Cross 50 + HMA(20) M15 + Alignement MTF (H1/H4/D1)")
+st.title("⚡ Bluestar M15 Sniper")
+st.caption(f"Stratégie M15 | Assets: {len(ASSETS)}")
 
-if st.button("LANCER LE SCAN M15", type="primary"):
+if st.button("SCANNER LE MARCHÉ", type="primary"):
+    
     api = OandaClient()
     
-    with st.spinner("Analyse M15 + Tendances de fond..."):
-        data = scan_m15_debug(api)
+    with st.spinner("Recherche d'opportunités..."):
+        results = run_sniper_scan(api)
     
-    if data:
-        df = pd.DataFrame(data)
-        
-        # Style
-        def style_dataframe(row):
-            if "BUY" in row["SIGNAL"]:
-                return ['background-color: #28a745; color: white; font-weight: bold'] * len(row)
-            elif "SELL" in row["SIGNAL"]:
-                return ['background-color: #dc3545; color: white; font-weight: bold'] * len(row)
-            elif "CROSS" in row["Etat RSI"]:
-                return ['background-color: #fff3cd; color: black; font-weight: bold'] * len(row)
-            else:
-                return [''] * len(row)
-
-        st.dataframe(
-            df.style.apply(style_dataframe, axis=1), 
-            use_container_width=True
-        )
-        
-        signals = [d for d in data if "✅" in d["SIGNAL"]]
-        if signals:
-            st.success(f"⚡ {len(signals)} Signal(aux) M15 confirmé(s) !")
-        else:
-            st.warning("Aucun signal validé pour le moment.")
+    st.divider()
+    
+    if not results:
+        # Affichage sympa si rien n'est trouvé
+        st.info("😴 Le marché est calme.")
+        st.markdown("**Aucun signal valide détecté pour le moment.**")
+        st.caption("Critères : RSI(7) croise 50 + HMA(20) alignée + Tendance de fond (H1/H4/D1) confirmée.")
+    
     else:
-        st.error("Aucune donnée récupérée.")
+        # Affichage des Cartes de Signaux
+        st.success(f"🎯 {len(results)} opportunité(s) détectée(s) !")
+        
+        for sig in results:
+            # Choix des couleurs et icônes
+            if sig['type'] == 'BUY':
+                icon = "🚀"
+                color = "green"
+                bg_color = "#d4edda" # Vert clair doux
+                border_color = "#c3e6cb"
+                text_color = "#155724"
+            else:
+                icon = "📉"
+                color = "red"
+                bg_color = "#f8d7da" # Rouge clair doux
+                border_color = "#f5c6cb"
+                text_color = "#721c24"
+
+            # Création de la "Carte" Visuelle
+            with st.container():
+                st.markdown(f"""
+                <div style="
+                    background-color: {bg_color};
+                    border: 1px solid {border_color};
+                    padding: 15px;
+                    border-radius: 10px;
+                    margin-bottom: 10px;
+                    color: {text_color};
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3 style="margin: 0; color: {text_color};">{icon} {sig['symbol']}</h3>
+                            <span style="font-weight: bold; font-size: 1.2em;">{sig['type']} SIGNAL</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 1.5em; font-weight: bold;">{sig['price']:.5f}</div>
+                            <small>RSI: {sig['rsi']:.1f} | MTF Score: {sig['score']}/3</small>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+    # Petit timestamp discret
+    st.caption(f"Dernière mise à jour : {datetime.now().strftime('%H:%M:%S')}")
