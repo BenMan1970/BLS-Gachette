@@ -149,7 +149,6 @@ def scan_h1_debug(api):
         hma_str = "🟢 Verte" if hma_val == 1 else "🔴 Rouge"
 
         # 4. MTF (H1 + H4 + D1)
-        # On charge H4/D1 uniquement pour vérifier l'alignement
         df_h4 = api.get_candles(symbol, "H4")
         df_d1 = api.get_candles(symbol, "D")
         
@@ -195,7 +194,7 @@ def scan_h1_debug(api):
 # 5. AFFICHAGE
 # ==========================================
 
-st.title("🔍 Scanner H1 - Diagnostic Complet")
+st.title("Scanner H1 - Diagnostic Complet")
 st.write("Ce tableau affiche l'état de **toutes** les paires, même s'il n'y a pas de signal, pour vérifier la logique.")
 
 if st.button("LANCER LE DIAGNOSTIC H1", type="primary"):
@@ -207,20 +206,25 @@ if st.button("LANCER LE DIAGNOSTIC H1", type="primary"):
     if data:
         df = pd.DataFrame(data)
         
-        # Mise en forme du tableau
+        # MISE EN FORME DU TABLEAU (Correction Visuelle)
         def style_dataframe(row):
-            # Couleur de fond pour les Signaux Valides
+            # 1. Signaux Valides (Fond Vert/Rouge, Texte Noir/Blanc)
             if "BUY" in row["SIGNAL"]:
-                return ['background-color: #d4edda; color: green; font-weight: bold'] * len(row)
+                return ['background-color: #28a745; color: white; font-weight: bold'] * len(row)
             elif "SELL" in row["SIGNAL"]:
-                return ['background-color: #f8d7da; color: red; font-weight: bold'] * len(row)
-            # Couleur texte pour les croisements RSI sans confirmation
+                return ['background-color: #dc3545; color: white; font-weight: bold'] * len(row)
+            
+            # 2. Croisement RSI seul (Fond Jaune, TEXTE NOIR FORCE)
             elif "CROSS" in row["Etat RSI"]:
-                return ['background-color: #fff3cd'] * len(row)
+                return ['background-color: #fff3cd; color: black; font-weight: bold'] * len(row)
+            
             else:
                 return [''] * len(row)
 
-        st.dataframe(df.style.apply(style_dataframe, axis=1), use_container_width=True)
+        st.dataframe(
+            df.style.apply(style_dataframe, axis=1), 
+            use_container_width=True # Correction du paramètre
+        )
         
         # Résumé
         signals = [d for d in data if "✅" in d["SIGNAL"]]
