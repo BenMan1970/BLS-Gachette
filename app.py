@@ -66,7 +66,7 @@ if 'cache' not in st.session_state:
     st.session_state.cache = {}
     st.session_state.cache_time = {}
 
-CACHE_DURATION = 30  # Réduit à 30s pour alertes rapides
+CACHE_DURATION = 30
 
 # ==========================================
 # MOTEUR API ROBUSTE
@@ -177,6 +177,57 @@ def calculate_ema(series: pd.Series, length: int) -> pd.Series:
     """EMA standard"""
     return series.ewm(span=length, adjust=False).mean()
 
+def calculate_sma(series: pd.Series, length: int) -> pd.Series:
+    """SMA standard"""
+    return series.rolling(window=length).mean()
+
+def calculate_zlema(series: pd.Series, length: int) -> pd.Series:
+    """ZLEMA - Zero Lag EMA"""
+    if len(series) < length:
+        return pd.Series(index=series.index, dtype=float)
+    lag = int((length - 1) / 2)
+    src_adj = series + (series - series.shift(lag))
+    return src_adj.ewm(span=length, adjust=False).mean()
+
+def calculate_atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
+    """ATR - Average True Range"""
+    high = df['high']
+    low = df['low']
+    close = df['close']
+    
+    tr1 = high - low
+    tr2 = abs(high - close.shift(1))
+    tr3 = abs(low - close.shift(1))
+    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+    return tr.ewm(span=period, adjust=False).mean()
+
+def calculate_adx(df: pd.DataFrame, period: int = 14) -> tuple:
+    """ADX - Average Directional Index"""
+    high = df['high']
+    low = df['low']
+    close = df['close']
+    
+    tr1 = high - low
+    tr2 = abs(high - close.shift(1))
+    tr3 = abs(low - close.shift(1))
+    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+    
+    up = high - high.shift(1)
+    down = low.shift(1) - low
+    plus_dm = np.where((up > down) & (up > 0), up, 0)
+    minus_dm = np.where((down > up) & (down > 0), down, 0)
+    
+    plus_dm = pd.Series(plus_dm, index=close.index)
+    minus_dm = pd.Series(minus_dm, index=close.index)
+    
+    atr_s = tr.ewm(span=period, adjust=False).mean()
+    plus_di = 100 * (plus_dm.ewm(span=period, adjust=False).mean() / atr_s)
+    minus_di = 100 * (minus_dm.ewm(span=period, adjust=False).mean() / atr_s)
+    dx = 100 * abs(plus_di - minus_di) / (plus_di + minus_di)
+    adx = dx.ewm(span=period, adjust=False).mean()
+    
+    return adx, plus_di, minus_di
+
 def get_rsi_ohlc4(df: pd.DataFrame, length: int = 7) -> pd.Series:
     """RSI sur OHLC4"""
     if len(df) < length + 10:
@@ -208,27 +259,173 @@ def get_colored_hma(df: pd.DataFrame, length: int = 20) -> tuple:
     
     return hma, trend_series
 
-def get_bluestar_trend(df: pd.DataFrame) -> int:
-    """Tendance ZLEMA"""
-    if len(df) < 50:
-        return 0
+# ==========================================
+# NOUVELLE LOGIQUE MTF GPS
+# ==========================================
+
+def analyze_timeframe_gps(df: pd.DataFrame, timeframe: str) -> Dict:
+    """
+    Analyse GPS d'un timeframe
+    Returns: {trend, score, details, atr}
+    """
+    if df.empty or len(df) < 50:
+        return {'trend': 'Neutral', 'score': 0, 'details': 'Données insuffisantes', 'atr': 0}
     
-    length = min(70, len(df) - 10)
-    src = df['close']
-    lag = int((length - 1) / 2)
-    src_lagged = src.shift(lag)
-    zlema_input = src + (src - src_lagged)
-    zlema = calculate_ema(zlema_input, length)
+    close = df['close']
+    curr_price = close.iloc[-1]
     
-    if pd.isna(zlema.iloc[-1]):
-        return 0
+    # Calcul ATR
+    atr_val = calculate_atr(df, 14).iloc[-1]
     
-    current_close = src.iloc[-1]
-    current_zlema = zlema.iloc[-1]
-    return 1 if current_close > current_zlema else -1
+    # Pour H4/D1 : utiliser logique macro (SMA 200)
+    if timeframe in ['H4', 'D1']:
+        sma50 = calculate_sma(close, 50)
+        sma200 = calculate_sma(close, 200)
+        
+        curr_sma50 = sma50.iloc[-1] if len(df) >= 50 else curr_price
+        has_200 = len(df) >= 200
+        curr_sma200 = sma200.iloc[-1] if has_200 else curr_sma50
+        
+        if has_200:
+            if curr_price > curr_sma200:
+                trend = "Bullish"
+                score = 60
+                if curr_price > curr_sma50: score += 20
+                if curr_sma50 > curr_sma200: score += 20
+                details = f"Prix > SMA200 ({curr_sma200:.5f})"
+            else:
+                icon = "📉"
+                bg_color = "#f8d7da"
+                border_color = "#dc3545"
+                text_color = "#721c24"
+            
+            # Analyse MTF détaillée
+            mtf_details = []
+            for tf in ['D1', 'H4', 'H1']:
+                tf_data = sig['mtf']['analysis'][tf]
+                trend_icon = ""
+                if tf_data['trend'] == 'Bullish':
+                    trend_icon = "🟢"
+                elif tf_data['trend'] == 'Bearish':
+                    trend_icon = "🔴"
+                elif tf_data['trend'] == 'Retracement':
+                    trend_icon = "🟠"
+                else:
+                    trend_icon = "⚪"
+                
+                atr_display = f"{tf_data['atr']:.5f}" if tf_data['atr'] < 1 else f"{tf_data['atr']:.2f}"
+                mtf_details.append(f"{trend_icon} <strong>{tf}:</strong> {tf_data['trend']} (ATR: {atr_display})")
+            
+            mtf_html = "<br>".join(mtf_details)
+            
+            # Construction du HTML
+            atr_display = f"{sig['atr_m15']:.5f}" if sig['atr_m15'] < 1 else f"{sig['atr_m15']:.2f}"
+            
+            html_content = f"""
+            <div style="background-color: {bg_color}; border-left: 5px solid {border_color}; padding: 20px; border-radius: 10px; margin-bottom: 15px; color: {text_color};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div>
+                        <h2 style="margin: 0; color: {text_color};">{icon} {sig['symbol']}</h2>
+                        <span style="font-weight: bold; font-size: 1.3em;">{sig['type']} SIGNAL</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 2.5em; font-weight: bold; color: {border_color};">{sig['total_score']}<span style="font-size: 0.5em;">/8</span></div>
+                        <div class="score-badge" style="background-color: {sig['quality_color']}; color: white;">{sig['quality']}</div>
+                        <div class="score-badge" style="background-color: #6c757d; color: white;">GPS: {sig['mtf']['quality']}</div>
+                    </div>
+                </div>
+                <div style="font-size: 1.5em; font-weight: bold; margin-bottom: 10px;">Prix : {sig['price']:.5f}</div>
+                <div style="font-size: 1.1em; color: {text_color}; margin-bottom: 15px;">ATR M15 : {atr_display}</div>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid {border_color};">
+                    <div style="margin-bottom: 10px;">
+                        <strong>📊 RSI(7) [{sig['rsi']['score']}/3]:</strong> {sig['rsi']['value']:.1f}<br>
+                        <span style="font-size: 0.9em;">{sig['rsi']['details']}</span>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>📈 HMA(20) [{sig['hma']['score']}/2]:</strong> {sig['hma']['color']}<br>
+                        <span style="font-size: 0.9em;">{sig['hma']['details']}</span>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>🌍 MTF GPS [{sig['mtf']['score']}/3] - Qualité: {sig['mtf']['quality']}</strong><br>
+                        <span style="font-size: 0.9em;">Alignement: {sig['mtf']['alignment']} | {sig['mtf']['details']}</span>
+                    </div>
+                    <div style="margin-top: 10px; padding: 10px; background-color: rgba(255,255,255,0.3); border-radius: 5px; font-size: 0.9em;">
+                        {mtf_html}
+                    </div>
+                </div>
+            </div>
+            """
+            
+            st.markdown(html_content, unsafe_allow_html=True)
+    
+    st.caption(f"⏰ {datetime.now().strftime('%H:%M:%S')} | Cache: {len(st.session_state.cache)} items | Score: RSI(3) + HMA(2) + MTF GPS(3) | Qualité GPS: A+/A/B/C")
+                trend = "Bearish"
+                score = 60
+                if curr_price < curr_sma50: score += 20
+                if curr_sma50 < curr_sma200: score += 20
+                details = f"Prix < SMA200 ({curr_sma200:.5f})"
+        else:
+            if curr_price > curr_sma50:
+                trend = "Bullish"
+                score = 50
+                details = f"Prix > SMA50 ({curr_sma50:.5f})"
+            else:
+                trend = "Bearish"
+                score = 50
+                details = f"Prix < SMA50 ({curr_sma50:.5f})"
+    
+    # Pour H1/M15 : utiliser logique intraday (ZLEMA + ADX)
+    else:
+        zlema_val = calculate_zlema(close, 50)
+        baseline = calculate_sma(close, 200)
+        adx_val, _, _ = calculate_adx(df, 14)
+        
+        curr_zlema = zlema_val.iloc[-1]
+        curr_adx = adx_val.iloc[-1]
+        
+        has_base = len(df) >= 200
+        curr_base = baseline.iloc[-1] if has_base else curr_zlema
+        
+        trend = "Range"
+        score = curr_adx
+        
+        # Logique de Retracement vs Tendance
+        if curr_price > curr_zlema:
+            if has_base and curr_price > curr_base:
+                trend = "Bullish"
+                details = f"Prix > ZLEMA & Baseline (ADX: {curr_adx:.1f})"
+            elif has_base and curr_price < curr_base:
+                trend = "Retracement"
+                details = f"Hausse sous Baseline (ADX: {curr_adx:.1f})"
+            else:
+                trend = "Bullish"
+                details = f"Prix > ZLEMA (ADX: {curr_adx:.1f})"
+        elif curr_price < curr_zlema:
+            if has_base and curr_price < curr_base:
+                trend = "Bearish"
+                details = f"Prix < ZLEMA & Baseline (ADX: {curr_adx:.1f})"
+            elif has_base and curr_price > curr_base:
+                trend = "Retracement"
+                details = f"Baisse au-dessus Baseline (ADX: {curr_adx:.1f})"
+            else:
+                trend = "Bearish"
+                details = f"Prix < ZLEMA (ADX: {curr_adx:.1f})"
+        else:
+            details = f"Range (ADX: {curr_adx:.1f})"
+        
+        if curr_adx < 20 and trend == "Retracement":
+            trend = "Range"
+            details = f"ADX faible ({curr_adx:.1f})"
+    
+    return {
+        'trend': trend,
+        'score': min(100, score),
+        'details': details,
+        'atr': atr_val
+    }
 
 # ==========================================
-# SYSTÈME DE SCORING
+# SYSTÈME DE SCORING AMÉLIORÉ
 # ==========================================
 
 def calculate_rsi_score(rsi_series: pd.Series, direction: str) -> Dict:
@@ -243,15 +440,12 @@ def calculate_rsi_score(rsi_series: pd.Series, direction: str) -> Dict:
     details = []
     
     if direction == 'BUY':
-        # Croisement confirmé = 3 points
         if prev_rsi < 50 and curr_rsi > 50:
             score = 3
             details.append("✅ Croisement haussier confirmé")
-        # Proche du seuil avec momentum = 2 points
         elif 45 < curr_rsi < 50 and curr_rsi > prev_rsi:
             score = 2
             details.append("⚠️ Approche haussière (momentum +)")
-        # Zone basse mais momentum positif = 1 point
         elif curr_rsi < 50 and curr_rsi > prev_rsi:
             score = 1
             details.append("📊 Zone basse, momentum positif")
@@ -285,11 +479,9 @@ def calculate_hma_score(hma_trend: pd.Series, direction: str) -> Dict:
     details = []
     
     if direction == 'BUY':
-        # Changement de couleur = 2 points
         if prev == -1 and curr == 1:
             score = 2
             details.append("✅ Changement VERT")
-        # Déjà vert = 1 point
         elif curr == 1:
             score = 1
             details.append("📈 Déjà VERT")
@@ -308,50 +500,76 @@ def calculate_hma_score(hma_trend: pd.Series, direction: str) -> Dict:
         'details': ' | '.join(details) if details else 'Neutre'
     }
 
-def calculate_mtf_score(api: OandaClient, symbol: str, direction: str) -> Dict:
-    """Score MTF (2 TF seulement) : 0-2 points"""
-    # On prend H1 et H4 seulement (pas D1 pour plus de réactivité)
-    timeframes = {'H1': 'H1', 'H4': 'H4'}
-    trends = {}
+def calculate_mtf_score_gps(api: OandaClient, symbol: str, direction: str) -> Dict:
+    """
+    Score MTF GPS amélioré : 0-3 points + Qualité A+/A/B/C
+    Analyse D1, H4, H1
+    """
+    timeframes = {'D1': 'D', 'H4': 'H4', 'H1': 'H1'}
+    analysis = {}
     
     for tf_name, tf_code in timeframes.items():
-        df = api.get_candles(symbol, tf_code, count=100)
+        df = api.get_candles(symbol, tf_code, count=300)
         if df.empty or len(df) < 50:
-            trends[tf_name] = 0
+            analysis[tf_name] = {'trend': 'Neutral', 'score': 0, 'details': 'N/A', 'atr': 0}
         else:
-            trends[tf_name] = get_bluestar_trend(df)
+            analysis[tf_name] = analyze_timeframe_gps(df, tf_name)
     
+    # Calcul du score MTF
     score = 0
     details = []
+    expected = 'Bullish' if direction == 'BUY' else 'Bearish'
     
-    expected = 1 if direction == 'BUY' else -1
+    # Poids: D1=2, H4=1, H1=0.5
+    weights = {'D1': 2.0, 'H4': 1.0, 'H1': 0.5}
+    aligned_weight = 0
     
-    # 2 TF alignés = 2 points
-    if trends['H1'] == expected and trends['H4'] == expected:
+    for tf in ['D1', 'H4', 'H1']:
+        if analysis[tf]['trend'] == expected:
+            aligned_weight += weights[tf]
+    
+    # Score sur 3 points basé sur l'alignement pondéré
+    total_weight = sum(weights.values())  # 3.5
+    alignment_pct = (aligned_weight / total_weight) * 100
+    
+    if alignment_pct >= 85:  # ~3 TF alignés
+        score = 3
+        details.append("✅ Alignement FORT")
+    elif alignment_pct >= 57:  # ~2 TF alignés
         score = 2
-        details.append("✅ H1+H4 alignés")
-    # 1 TF aligné = 1 point
-    elif trends['H1'] == expected or trends['H4'] == expected:
+        details.append("⚠️ Alignement MOYEN")
+    elif alignment_pct >= 28:  # ~1 TF aligné
         score = 1
-        aligned = 'H1' if trends['H1'] == expected else 'H4'
-        details.append(f"⚠️ {aligned} aligné seulement")
+        details.append("📊 Alignement FAIBLE")
+    
+    # Déterminer la qualité GPS
+    quality = 'C'
+    if analysis['D1']['trend'] == analysis['H4']['trend']:
+        quality = 'B'
+    if analysis['D1']['trend'] == analysis['H4']['trend'] == analysis['H1']['trend']:
+        quality = 'A'
+    if quality == 'A' and analysis['D1']['score'] > 70:
+        quality = 'A+'
     
     return {
         'score': score,
-        'trends': trends,
+        'quality': quality,
+        'analysis': analysis,
+        'alignment': f"{alignment_pct:.0f}%",
         'details': ' | '.join(details) if details else 'Pas d\'alignement'
     }
 
 # ==========================================
-# SCANNER AVEC SCORING
+# SCANNER AVEC SCORING GPS
 # ==========================================
 
 def run_sniper_scan(api: OandaClient, min_score: int = 3) -> List[Dict]:
-    """Scanner avec système de scoring
-    Score total : 0-7 points
+    """
+    Scanner avec système de scoring GPS amélioré
+    Score total : 0-8 points
     - RSI : 0-3 points
     - HMA : 0-2 points
-    - MTF : 0-2 points
+    - MTF GPS : 0-3 points
     """
     signals = []
     skipped = 0
@@ -381,24 +599,25 @@ def run_sniper_scan(api: OandaClient, min_score: int = 3) -> List[Dict]:
                 continue
             
             current_price = df_m15['close'].iloc[-1]
+            atr_m15 = calculate_atr(df_m15, 14).iloc[-1]
             
             # 3. Test BUY
             rsi_buy = calculate_rsi_score(rsi_series, 'BUY')
-            if rsi_buy['score'] > 0:  # Au moins un signal RSI
+            if rsi_buy['score'] > 0:
                 hma_buy = calculate_hma_score(hma_trend, 'BUY')
-                mtf_buy = calculate_mtf_score(api, symbol, 'BUY')
+                mtf_buy = calculate_mtf_score_gps(api, symbol, 'BUY')
                 
                 total_score = rsi_buy['score'] + hma_buy['score'] + mtf_buy['score']
                 
                 if total_score >= min_score:
                     # Déterminer la qualité
-                    if total_score >= 6:
+                    if total_score >= 7 and mtf_buy['quality'] in ['A+', 'A']:
                         quality = "🔥 EXCELLENT"
                         quality_color = "#28a745"
-                    elif total_score >= 5:
+                    elif total_score >= 6:
                         quality = "⭐ FORT"
                         quality_color = "#ffc107"
-                    elif total_score >= 4:
+                    elif total_score >= 5:
                         quality = "✓ BON"
                         quality_color = "#17a2b8"
                     else:
@@ -409,6 +628,7 @@ def run_sniper_scan(api: OandaClient, min_score: int = 3) -> List[Dict]:
                         "symbol": symbol,
                         "type": "BUY",
                         "price": current_price,
+                        "atr_m15": atr_m15,
                         "total_score": total_score,
                         "quality": quality,
                         "quality_color": quality_color,
@@ -421,18 +641,18 @@ def run_sniper_scan(api: OandaClient, min_score: int = 3) -> List[Dict]:
             rsi_sell = calculate_rsi_score(rsi_series, 'SELL')
             if rsi_sell['score'] > 0:
                 hma_sell = calculate_hma_score(hma_trend, 'SELL')
-                mtf_sell = calculate_mtf_score(api, symbol, 'SELL')
+                mtf_sell = calculate_mtf_score_gps(api, symbol, 'SELL')
                 
                 total_score = rsi_sell['score'] + hma_sell['score'] + mtf_sell['score']
                 
                 if total_score >= min_score:
-                    if total_score >= 6:
+                    if total_score >= 7 and mtf_sell['quality'] in ['A+', 'A']:
                         quality = "🔥 EXCELLENT"
                         quality_color = "#28a745"
-                    elif total_score >= 5:
+                    elif total_score >= 6:
                         quality = "⭐ FORT"
                         quality_color = "#ffc107"
-                    elif total_score >= 4:
+                    elif total_score >= 5:
                         quality = "✓ BON"
                         quality_color = "#17a2b8"
                     else:
@@ -443,6 +663,7 @@ def run_sniper_scan(api: OandaClient, min_score: int = 3) -> List[Dict]:
                         "symbol": symbol,
                         "type": "SELL",
                         "price": current_price,
+                        "atr_m15": atr_m15,
                         "total_score": total_score,
                         "quality": quality,
                         "quality_color": quality_color,
@@ -468,12 +689,12 @@ def run_sniper_scan(api: OandaClient, min_score: int = 3) -> List[Dict]:
 # ==========================================
 
 st.title("⚡ Bluestar M15 Sniper Pro")
-st.caption(f"Scanner Scoring System | {len(ASSETS)} actifs | Cache 30s")
+st.caption(f"Scanner GPS + Scoring System | {len(ASSETS)} actifs | Cache 30s")
 
 # Réglage du score minimum
 col1, col2, col3 = st.columns([2, 2, 1])
 with col1:
-    min_score = st.slider("Score minimum", 2, 7, 3, help="Score total sur 7 (RSI:3 + HMA:2 + MTF:2)")
+    min_score = st.slider("Score minimum", 2, 8, 4, help="Score total sur 8 (RSI:3 + HMA:2 + MTF GPS:3)")
 with col2:
     scan_button = st.button("🎯 LANCER LE SCAN", type="primary", use_container_width=True)
 with col3:
@@ -487,7 +708,7 @@ if scan_button:
     
     start_time = time.time()
     
-    with st.spinner("🔎 Analyse en cours..."):
+    with st.spinner("🔎 Analyse GPS en cours..."):
         results = run_sniper_scan(api, min_score=min_score)
     
     scan_duration = time.time() - start_time
@@ -499,7 +720,7 @@ if scan_button:
     with col1:
         st.metric("Signaux", len(results))
     with col2:
-        st.metric("Score min", f"{min_score}/7")
+        st.metric("Score min", f"{min_score}/8")
     with col3:
         st.metric("Scan", f"{scan_duration:.1f}s")
     with col4:
@@ -508,12 +729,12 @@ if scan_button:
     st.divider()
     
     if not results:
-        st.info(f"😴 **Aucun signal ≥ {min_score}/7 points**")
+        st.info(f"😴 **Aucun signal ≥ {min_score}/8 points**")
         st.caption("💡 Essaye de baisser le score minimum ou attends la prochaine opportunité")
     
     else:
         # Tri par score décroissant
-        results_sorted = sorted(results, key=lambda x: x['total_score'], reverse=True)
+        results_sorted = sorted(results, key=lambda x: (x['total_score'], x['mtf']['quality']), reverse=True)
         
         st.success(f"🎯 **{len(results)} signal(aux) détecté(s) !**")
         
@@ -524,49 +745,3 @@ if scan_button:
                 border_color = "#28a745"
                 text_color = "#155724"
             else:
-                icon = "📉"
-                bg_color = "#f8d7da"
-                border_color = "#dc3545"
-                text_color = "#721c24"
-            
-            # Préparation des icônes MTF
-            expected = 1 if sig['type'] == 'BUY' else -1
-            opposite = -1 if sig['type'] == 'BUY' else 1
-            
-            mtf_h1 = '✅' if sig['mtf']['trends']['H1'] == expected else ('❌' if sig['mtf']['trends']['H1'] == opposite else '⚪')
-            mtf_h4 = '✅' if sig['mtf']['trends']['H4'] == expected else ('❌' if sig['mtf']['trends']['H4'] == opposite else '⚪')
-            
-            # Construction du HTML proprement
-            html_content = f"""
-            <div style="background-color: {bg_color}; border-left: 5px solid {border_color}; padding: 20px; border-radius: 10px; margin-bottom: 15px; color: {text_color};">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <div>
-                        <h2 style="margin: 0; color: {text_color};">{icon} {sig['symbol']}</h2>
-                        <span style="font-weight: bold; font-size: 1.3em;">{sig['type']} SIGNAL</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 2.5em; font-weight: bold; color: {border_color};">{sig['total_score']}<span style="font-size: 0.5em;">/7</span></div>
-                        <div class="score-badge" style="background-color: {sig['quality_color']}; color: white;">{sig['quality']}</div>
-                    </div>
-                </div>
-                <div style="font-size: 1.5em; font-weight: bold; margin-bottom: 15px;">Prix : {sig['price']:.5f}</div>
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid {border_color};">
-                    <div style="margin-bottom: 10px;">
-                        <strong>📊 RSI(7) [{sig['rsi']['score']}/3]:</strong> {sig['rsi']['value']:.1f}<br>
-                        <span style="font-size: 0.9em;">{sig['rsi']['details']}</span>
-                    </div>
-                    <div style="margin-bottom: 10px;">
-                        <strong>📈 HMA(20) [{sig['hma']['score']}/2]:</strong> {sig['hma']['color']}<br>
-                        <span style="font-size: 0.9em;">{sig['hma']['details']}</span>
-                    </div>
-                    <div>
-                        <strong>🌍 MTF [{sig['mtf']['score']}/2]:</strong> H1: {mtf_h1} | H4: {mtf_h4}<br>
-                        <span style="font-size: 0.9em;">{sig['mtf']['details']}</span>
-                    </div>
-                </div>
-            </div>
-            """
-            
-            st.markdown(html_content, unsafe_allow_html=True)
-    
-    st.caption(f"⏰ {datetime.now().strftime('%H:%M:%S')} | Cache: {len(st.session_state.cache)} items | Score system: RSI(3) + HMA(2) + MTF(2)")
