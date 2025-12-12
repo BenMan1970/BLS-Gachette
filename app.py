@@ -294,71 +294,6 @@ def analyze_timeframe_gps(df: pd.DataFrame, timeframe: str) -> Dict:
                 if curr_sma50 > curr_sma200: score += 20
                 details = f"Prix > SMA200 ({curr_sma200:.5f})"
             else:
-                icon = "📉"
-                bg_color = "#f8d7da"
-                border_color = "#dc3545"
-                text_color = "#721c24"
-            
-            # Analyse MTF détaillée
-            mtf_details = []
-            for tf in ['D1', 'H4', 'H1']:
-                tf_data = sig['mtf']['analysis'][tf]
-                trend_icon = ""
-                if tf_data['trend'] == 'Bullish':
-                    trend_icon = "🟢"
-                elif tf_data['trend'] == 'Bearish':
-                    trend_icon = "🔴"
-                elif tf_data['trend'] == 'Retracement':
-                    trend_icon = "🟠"
-                else:
-                    trend_icon = "⚪"
-                
-                atr_display = f"{tf_data['atr']:.5f}" if tf_data['atr'] < 1 else f"{tf_data['atr']:.2f}"
-                mtf_details.append(f"{trend_icon} <strong>{tf}:</strong> {tf_data['trend']} (ATR: {atr_display})")
-            
-            mtf_html = "<br>".join(mtf_details)
-            
-            # Construction du HTML
-            atr_display = f"{sig['atr_m15']:.5f}" if sig['atr_m15'] < 1 else f"{sig['atr_m15']:.2f}"
-            
-            html_content = f"""
-            <div style="background-color: {bg_color}; border-left: 5px solid {border_color}; padding: 20px; border-radius: 10px; margin-bottom: 15px; color: {text_color};">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <div>
-                        <h2 style="margin: 0; color: {text_color};">{icon} {sig['symbol']}</h2>
-                        <span style="font-weight: bold; font-size: 1.3em;">{sig['type']} SIGNAL</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 2.5em; font-weight: bold; color: {border_color};">{sig['total_score']}<span style="font-size: 0.5em;">/8</span></div>
-                        <div class="score-badge" style="background-color: {sig['quality_color']}; color: white;">{sig['quality']}</div>
-                        <div class="score-badge" style="background-color: #6c757d; color: white;">GPS: {sig['mtf']['quality']}</div>
-                    </div>
-                </div>
-                <div style="font-size: 1.5em; font-weight: bold; margin-bottom: 10px;">Prix : {sig['price']:.5f}</div>
-                <div style="font-size: 1.1em; color: {text_color}; margin-bottom: 15px;">ATR M15 : {atr_display}</div>
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid {border_color};">
-                    <div style="margin-bottom: 10px;">
-                        <strong>📊 RSI(7) [{sig['rsi']['score']}/3]:</strong> {sig['rsi']['value']:.1f}<br>
-                        <span style="font-size: 0.9em;">{sig['rsi']['details']}</span>
-                    </div>
-                    <div style="margin-bottom: 10px;">
-                        <strong>📈 HMA(20) [{sig['hma']['score']}/2]:</strong> {sig['hma']['color']}<br>
-                        <span style="font-size: 0.9em;">{sig['hma']['details']}</span>
-                    </div>
-                    <div style="margin-bottom: 10px;">
-                        <strong>🌍 MTF GPS [{sig['mtf']['score']}/3] - Qualité: {sig['mtf']['quality']}</strong><br>
-                        <span style="font-size: 0.9em;">Alignement: {sig['mtf']['alignment']} | {sig['mtf']['details']}</span>
-                    </div>
-                    <div style="margin-top: 10px; padding: 10px; background-color: rgba(255,255,255,0.3); border-radius: 5px; font-size: 0.9em;">
-                        {mtf_html}
-                    </div>
-                </div>
-            </div>
-            """
-            
-            st.markdown(html_content, unsafe_allow_html=True)
-    
-    st.caption(f"⏰ {datetime.now().strftime('%H:%M:%S')} | Cache: {len(st.session_state.cache)} items | Score: RSI(3) + HMA(2) + MTF GPS(3) | Qualité GPS: A+/A/B/C")
                 trend = "Bearish"
                 score = 60
                 if curr_price < curr_sma50: score += 20
@@ -685,6 +620,82 @@ def run_sniper_scan(api: OandaClient, min_score: int = 3) -> List[Dict]:
     return signals
 
 # ==========================================
+# FONCTION D'AFFICHAGE DES SIGNAUX
+# ==========================================
+
+def display_signal(sig: Dict):
+    """Affiche un signal formaté"""
+    if sig['type'] == 'BUY':
+        icon = "🚀"
+        bg_color = "#d4edda"
+        border_color = "#28a745"
+        text_color = "#155724"
+    else:
+        icon = "📉"
+        bg_color = "#f8d7da"
+        border_color = "#dc3545"
+        text_color = "#721c24"
+    
+    # Analyse MTF détaillée
+    mtf_details = []
+    for tf in ['D1', 'H4', 'H1']:
+        tf_data = sig['mtf']['analysis'][tf]
+        trend_icon = ""
+        if tf_data['trend'] == 'Bullish':
+            trend_icon = "🟢"
+        elif tf_data['trend'] == 'Bearish':
+            trend_icon = "🔴"
+        elif tf_data['trend'] == 'Retracement':
+            trend_icon = "🟠"
+        else:
+            trend_icon = "⚪"
+        
+        atr_display = f"{tf_data['atr']:.5f}" if tf_data['atr'] < 1 else f"{tf_data['atr']:.2f}"
+        mtf_details.append(f"{trend_icon} <strong>{tf}:</strong> {tf_data['trend']} (ATR: {atr_display})")
+    
+    mtf_html = "<br>".join(mtf_details)
+    
+    # Construction du HTML
+    atr_display = f"{sig['atr_m15']:.5f}" if sig['atr_m15'] < 1 else f"{sig['atr_m15']:.2f}"
+    
+    html_content = f"""
+    <div style="background-color: {bg_color}; border-left: 5px solid {border_color}; padding: 20px; border-radius: 10px; margin-bottom: 15px; color: {text_color};">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div>
+                <h2 style="margin: 0; color: {text_color};">{icon} {sig['symbol']}</h2>
+                <span style="font-weight: bold; font-size: 1.3em;">{sig['type']} SIGNAL</span>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 2.5em; font-weight: bold; color: {border_color};">{sig['total_score']}<span style="font-size: 0.5em;">/8</span></div>
+                <div class="score-badge" style="background-color: {sig['quality_color']}; color: white;">{sig['quality']}</div>
+                <div class="score-badge" style="background-color: #6c757d; color: white;">GPS: {sig['mtf']['quality']}</div>
+            </div>
+        </div>
+        <div style="font-size: 1.5em; font-weight: bold; margin-bottom: 10px;">Prix : {sig['price']:.5f}</div>
+        <div style="font-size: 1.1em; color: {text_color}; margin-bottom: 15px;">ATR M15 : {atr_display}</div>
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid {border_color};">
+            <div style="margin-bottom: 10px;">
+                <strong>📊 RSI(7) [{sig['rsi']['score']}/3]:</strong> {sig['rsi']['value']:.1f}<br>
+                <span style="font-size: 0.9em;">{sig['rsi']['details']}</span>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <strong>📈 HMA(20) [{sig['hma']['score']}/2]:</strong> {sig['hma']['color']}<br>
+                <span style="font-size: 0.9em;">{sig['hma']['details']}</span>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <strong>🌍 MTF GPS [{sig['mtf']['score']}/3] - Qualité: {sig['mtf']['quality']}</strong><br>
+                <span style="font-size: 0.9em;">Alignement: {sig['mtf']['alignment']} | {sig['mtf']['details']}</span>
+            </div>
+            <div style="margin-top: 10px; padding: 10px; background-color: rgba(255,255,255,0.3); border-radius: 5px; font-size: 0.9em;">
+                {mtf_html}
+            </div>
+        </div>
+    </div>
+    """
+    
+    st.markdown(html_content, unsafe_allow_html=True)
+
+# ==========================================
 # INTERFACE UTILISATEUR
 # ==========================================
 
@@ -739,9 +750,6 @@ if scan_button:
         st.success(f"🎯 **{len(results)} signal(aux) détecté(s) !**")
         
         for sig in results_sorted:
-            if sig['type'] == 'BUY':
-                icon = "🚀"
-                bg_color = "#d4edda"
-                border_color = "#28a745"
-                text_color = "#155724"
-            else:
+            display_signal(sig)
+    
+    st.caption(f"⏰ {datetime.now().strftime('%H:%M:%S')} | Cache: {len(st.session_state.cache)} items | Score: RSI(3) + HMA(2) + MTF GPS(3) | Qualité GPS: A+/A/B/C")
