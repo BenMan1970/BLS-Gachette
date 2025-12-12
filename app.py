@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -531,54 +530,43 @@ if scan_button:
                 text_color = "#721c24"
             
             # Préparation des icônes MTF
-            mtf_h1 = '✅' if sig['mtf']['trends']['H1'] == (1 if sig['type'] == 'BUY' else -1) else ('❌' if sig['mtf']['trends']['H1'] == (-1 if sig['type'] == 'BUY' else 1) else '⚪')
-            mtf_h4 = '✅' if sig['mtf']['trends']['H4'] == (1 if sig['type'] == 'BUY' else -1) else ('❌' if sig['mtf']['trends']['H4'] == (-1 if sig['type'] == 'BUY' else 1) else '⚪')
+            expected = 1 if sig['type'] == 'BUY' else -1
+            opposite = -1 if sig['type'] == 'BUY' else 1
             
-            # Affichage avec colonnes Streamlit
-            with st.container():
-                st.markdown(f"""
-                <div style="
-                    background-color: {bg_color};
-                    border-left: 5px solid {border_color};
-                    padding: 20px;
-                    border-radius: 10px;
-                    margin-bottom: 15px;
-                    color: {text_color};
-                ">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <div>
-                            <h2 style="margin: 0; color: {text_color};">{icon} {sig['symbol']}</h2>
-                            <span style="font-weight: bold; font-size: 1.3em;">{sig['type']} SIGNAL</span>
-                        </div>
-                        <div style="text-align: right;">
-                            <div style="font-size: 2.5em; font-weight: bold; color: {border_color};">
-                                {sig['total_score']}<span style="font-size: 0.5em;">/7</span>
-                            </div>
-                            <div class="score-badge" style="background-color: {sig['quality_color']}; color: white;">
-                                {sig['quality']}
-                            </div>
-                        </div>
+            mtf_h1 = '✅' if sig['mtf']['trends']['H1'] == expected else ('❌' if sig['mtf']['trends']['H1'] == opposite else '⚪')
+            mtf_h4 = '✅' if sig['mtf']['trends']['H4'] == expected else ('❌' if sig['mtf']['trends']['H4'] == opposite else '⚪')
+            
+            # Construction du HTML proprement
+            html_content = f"""
+            <div style="background-color: {bg_color}; border-left: 5px solid {border_color}; padding: 20px; border-radius: 10px; margin-bottom: 15px; color: {text_color};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div>
+                        <h2 style="margin: 0; color: {text_color};">{icon} {sig['symbol']}</h2>
+                        <span style="font-weight: bold; font-size: 1.3em;">{sig['type']} SIGNAL</span>
                     </div>
-                    
-                    <div style="font-size: 1.5em; font-weight: bold; margin-bottom: 15px;">
-                        Prix : {sig['price']:.5f}
-                    </div>
-                    
-                    <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid {border_color};">
-                        <div style="margin-bottom: 10px;">
-                            <strong>📊 RSI(7) [{sig['rsi']['score']}/3]:</strong> {sig['rsi']['value']:.1f}<br>
-                            <span style="font-size: 0.9em;">{sig['rsi']['details']}</span>
-                        </div>
-                        <div style="margin-bottom: 10px;">
-                            <strong>📈 HMA(20) [{sig['hma']['score']}/2]:</strong> {sig['hma']['color']}<br>
-                            <span style="font-size: 0.9em;">{sig['hma']['details']}</span>
-                        </div>
-                        <div>
-                            <strong>🌍 MTF [{sig['mtf']['score']}/2]:</strong> H1: {mtf_h1} | H4: {mtf_h4}<br>
-                            <span style="font-size: 0.9em;">{sig['mtf']['details']}</span>
-                        </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 2.5em; font-weight: bold; color: {border_color};">{sig['total_score']}<span style="font-size: 0.5em;">/7</span></div>
+                        <div class="score-badge" style="background-color: {sig['quality_color']}; color: white;">{sig['quality']}</div>
                     </div>
                 </div>
-                """, unsafe_allow_html=True)
+                <div style="font-size: 1.5em; font-weight: bold; margin-bottom: 15px;">Prix : {sig['price']:.5f}</div>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid {border_color};">
+                    <div style="margin-bottom: 10px;">
+                        <strong>📊 RSI(7) [{sig['rsi']['score']}/3]:</strong> {sig['rsi']['value']:.1f}<br>
+                        <span style="font-size: 0.9em;">{sig['rsi']['details']}</span>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>📈 HMA(20) [{sig['hma']['score']}/2]:</strong> {sig['hma']['color']}<br>
+                        <span style="font-size: 0.9em;">{sig['hma']['details']}</span>
+                    </div>
+                    <div>
+                        <strong>🌍 MTF [{sig['mtf']['score']}/2]:</strong> H1: {mtf_h1} | H4: {mtf_h4}<br>
+                        <span style="font-size: 0.9em;">{sig['mtf']['details']}</span>
+                    </div>
+                </div>
+            </div>
+            """
+            
+            st.markdown(html_content, unsafe_allow_html=True)
     
     st.caption(f"⏰ {datetime.now().strftime('%H:%M:%S')} | Cache: {len(st.session_state.cache)} items | Score system: RSI(3) + HMA(2) + MTF(2)")
