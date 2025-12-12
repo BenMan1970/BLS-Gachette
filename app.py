@@ -13,7 +13,7 @@ from typing import Optional, Dict, List
 # ==========================================
 st.set_page_config(page_title="Bluestar M15 Sniper Pro", layout="centered", page_icon="⚡")
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)  # Réduire le bruit
 logger = logging.getLogger(__name__)
 
 # CSS amélioré
@@ -113,14 +113,13 @@ class OandaClient:
         
         params = {"count": count, "granularity": granularity, "price": "M"}
         
-        max_retries = 3
+        max_retries = 2  # Réduit à 2 pour accélérer
         for attempt in range(max_retries):
             try:
                 r = instruments.InstrumentsCandles(instrument=instrument, params=params)
                 self.client.request(r)
                 
                 if 'candles' not in r.response:
-                    logger.warning(f"Pas de données candles pour {instrument} {granularity}")
                     return pd.DataFrame()
                 
                 data = []
@@ -135,20 +134,18 @@ class OandaClient:
                                 'close': float(candle['mid']['c']),
                                 'volume': int(candle['volume'])
                             })
-                        except (KeyError, ValueError) as e:
-                            logger.warning(f"Candle invalide ignorée pour {instrument}: {e}")
+                        except (KeyError, ValueError):
                             continue
                 
                 if not data:
-                    logger.warning(f"Aucune donnée valide pour {instrument} {granularity}")
                     return pd.DataFrame()
                 
                 df = pd.DataFrame(data)
                 df['time'] = pd.to_datetime(df['time'])
                 
-                # Validation des données
-                if len(df) < 100:
-                    logger.warning(f"Données insuffisantes pour {instrument}: {len(df)} bougies")
+                # Validation flexible : accepter au moins 70 bougies (au lieu de 100)
+                # Car certains actifs ont moins de données le weekend
+                if len(df) < 70:
                     return pd.DataFrame()
                 
                 # Mise en cache
@@ -157,17 +154,15 @@ class OandaClient:
                 
                 return df
                 
-            except oandapyV20.exceptions.V20Error as e:
-                logger.error(f"Erreur API OANDA pour {instrument} {granularity}: {e}")
+            except oandapyV20.exceptions.V20Error:
                 if attempt < max_retries - 1:
-                    time.sleep(0.5 * (attempt + 1))
+                    time.sleep(0.3)
                     continue
                 return pd.DataFrame()
                 
-            except Exception as e:
-                logger.error(f"Erreur inattendue pour {instrument} {granularity}: {e}")
+            except Exception:
                 if attempt < max_retries - 1:
-                    time.sleep(0.5 * (attempt + 1))
+                    time.sleep(0.3)
                     continue
                 return pd.DataFrame()
         
@@ -201,7 +196,6 @@ def get_rsi_ohlc4(df: pd.DataFrame, length: int = 7) -> pd.Series:
     gain = delta.clip(lower=0).ewm(alpha=1/length, adjust=False).mean()
     loss = (-delta.clip(upper=0)).ewm(alpha=1/length, adjust=False).mean()
     
-    # Éviter division par zéro
     rs = gain / loss.replace(0, np.nan)
     rsi = 100 - (100 / (1 + rs))
     return rsi.fillna(50)
@@ -224,11 +218,11 @@ def get_colored_hma(df: pd.DataFrame, length: int = 20) -> tuple:
     return hma, trend_series
 
 def get_bluestar_trend(df: pd.DataFrame) -> int:
-    """Tendance ZLEMA"""
-    if len(df) < 70:
+    """Tendance ZLEMA - Accepte moins de 70 bougies"""
+    if len(df) < 50:  # Réduit le minimum
         return 0
     
-    length = 70
+    length = min(70, len(df) - 10)  # Adaptatif
     src = df['close']
     lag = int((length - 1) / 2)
     src_lagged = src.shift(lag)
@@ -247,10 +241,7 @@ def get_bluestar_trend(df: pd.DataFrame) -> int:
 # ==========================================
 
 def detect_rsi_approach(rsi_series: pd.Series, threshold: int = 50, lookback: int = 3) -> Dict:
-    """
-    Détecte si le RSI s'approche de la ligne médiane pour la traverser
-    Retourne: {'cross_up': bool, 'cross_down': bool, 'approaching_up': bool, 'approaching_down': bool}
-    """
+    """Détecte si le RSI s'approche de la ligne médiane pour la traverser"""
     if len(rsi_series) < lookback + 2:
         return {'cross_up': False, 'cross_down': False, 'approaching_up': False, 'approaching_down': False}
     
@@ -285,7 +276,7 @@ def detect_rsi_approach(rsi_series: pd.Series, threshold: int = 50, lookback: in
     }
 
 def detect_hma_color_change(hma_trend: pd.Series) -> Dict:
-    """Détecte le changement de couleur HMA (rouge->vert ou vert->rouge)"""
+    """Détecte le changement de couleur HMA"""
     if len(hma_trend) < 2:
         return {'changed_to_bullish': False, 'changed_to_bearish': False, 'current': 0}
     
@@ -302,20 +293,24 @@ def detect_hma_color_change(hma_trend: pd.Series) -> Dict:
     }
 
 def check_mtf_alignment(api: OandaClient, symbol: str) -> Dict:
-    """Vérification rapide de l'alignement MTF (H1, H4, D1)"""
+    """Vérification rapide de l'alignement MTF avec gestion des données manquantes"""
     timeframes = {'H1': 'H1', 'H4': 'H4', 'D1': 'D'}
     trends = {}
     
     for tf_name, tf_code in timeframes.items():
         df = api.get_candles(symbol, tf_code, count=100)
-        if df.empty:
-            trends[tf_name] = 0
+        if df.empty or len(df) < 50:  # Plus tolérant
+            trends[tf_name] = 0  # Neutre si pas de données
         else:
             trends[tf_name] = get_bluestar_trend(df)
     
-    score = sum(trends.values())
-    aligned_bullish = all(v == 1 for v in trends.values())
-    aligned_bearish = all(v == -1 for v in trends.values())
+    # Score : ignorer les timeframes neutres (0)
+    non_zero_trends = [v for v in trends.values() if v != 0]
+    score = sum(non_zero_trends) if non_zero_trends else 0
+    
+    # Alignement : tous les TF disponibles sont dans la même direction
+    aligned_bullish = all(v == 1 for v in non_zero_trends) if non_zero_trends else False
+    aligned_bearish = all(v == -1 for v in non_zero_trends) if non_zero_trends else False
     
     return {
         'score': score,
@@ -331,7 +326,7 @@ def check_mtf_alignment(api: OandaClient, symbol: str) -> Dict:
 def run_sniper_scan(api: OandaClient) -> List[Dict]:
     """Scanner optimisé avec détection précise"""
     signals = []
-    errors = []
+    skipped = 0
     
     progress_bar = st.progress(0)
     status_text = st.empty()
@@ -339,42 +334,41 @@ def run_sniper_scan(api: OandaClient) -> List[Dict]:
     
     for i, symbol in enumerate(ASSETS):
         progress_bar.progress((i + 1) / total)
-        status_text.text(f"🔍 Analyse de {symbol}... ({i+1}/{total})")
+        status_text.text(f"🔍 {symbol}... ({i+1}/{total})")
         
         try:
-            # 1. Données M15 (utilise -2 pour éviter lookahead bias)
+            # 1. Données M15
             df_m15 = api.get_candles(symbol, "M15", count=150)
-            if df_m15.empty or len(df_m15) < 100:
+            if df_m15.empty or len(df_m15) < 70:
+                skipped += 1
                 continue
 
-            # 2. RSI OHLC4 avec détection d'approche
+            # 2. RSI avec détection d'approche
             rsi_series = get_rsi_ohlc4(df_m15)
             if rsi_series.empty:
                 continue
             
             rsi_status = detect_rsi_approach(rsi_series)
             
-            # Filtre rapide: continuer seulement si approche ou croisement
+            # Filtre rapide
             if not any([rsi_status['cross_up'], rsi_status['cross_down'], 
                        rsi_status['approaching_up'], rsi_status['approaching_down']]):
                 continue
 
-            # 3. HMA M15 avec détection de changement de couleur
+            # 3. HMA
             hma, hma_trend = get_colored_hma(df_m15)
             if hma_trend.empty:
                 continue
             
             hma_status = detect_hma_color_change(hma_trend)
             
-            # 4. MTF Alignment (seulement si RSI et HMA sont prometteurs)
+            # 4. MTF Alignment
             mtf = check_mtf_alignment(api, symbol)
             
-            # 5. Prix actuel (utilise -2 pour confirmer la bougie complète)
+            # 5. Prix actuel
             current_price = df_m15['close'].iloc[-2]
             
-            # ========================================
-            # LOGIQUE DE SIGNAL BUY
-            # ========================================
+            # LOGIQUE BUY
             if (rsi_status['cross_up'] or rsi_status['approaching_up']) and \
                (hma_status['changed_to_bullish'] or hma_status['current'] == 1) and \
                (mtf['aligned_bullish'] or mtf['score'] >= 2):
@@ -389,16 +383,14 @@ def run_sniper_scan(api: OandaClient) -> List[Dict]:
                     "rsi_crossed": rsi_status['cross_up'],
                     "rsi_approaching": rsi_status['approaching_up'],
                     "hma_changed": hma_status['changed_to_bullish'],
-                    "hma_color": "VERT" if hma_status['current'] == 1 else "ROUGE",
+                    "hma_color": "VERT",
                     "mtf_score": mtf['score'],
                     "mtf_aligned": mtf['aligned_bullish'],
                     "mtf_trends": mtf['trends'],
                     "strength": signal_strength
                 })
             
-            # ========================================
-            # LOGIQUE DE SIGNAL SELL
-            # ========================================
+            # LOGIQUE SELL
             elif (rsi_status['cross_down'] or rsi_status['approaching_down']) and \
                  (hma_status['changed_to_bearish'] or hma_status['current'] == -1) and \
                  (mtf['aligned_bearish'] or mtf['score'] <= -2):
@@ -413,31 +405,28 @@ def run_sniper_scan(api: OandaClient) -> List[Dict]:
                     "rsi_crossed": rsi_status['cross_down'],
                     "rsi_approaching": rsi_status['approaching_down'],
                     "hma_changed": hma_status['changed_to_bearish'],
-                    "hma_color": "ROUGE" if hma_status['current'] == -1 else "VERT",
+                    "hma_color": "ROUGE",
                     "mtf_score": mtf['score'],
                     "mtf_aligned": mtf['aligned_bearish'],
                     "mtf_trends": mtf['trends'],
                     "strength": signal_strength
                 })
         
-        except Exception as e:
-            logger.error(f"Erreur lors du scan de {symbol}: {str(e)}")
-            errors.append(f"{symbol}: {str(e)[:50]}")
+        except Exception:
+            skipped += 1
             continue
     
     progress_bar.empty()
     status_text.empty()
     
-    # Afficher les erreurs si présentes
-    if errors and len(errors) < 5:
-        with st.expander("⚠️ Erreurs détectées", expanded=False):
-            for err in errors:
-                st.text(err)
+    # Info sur les actifs ignorés
+    if skipped > 0:
+        st.caption(f"ℹ️ {skipped} actif(s) ignoré(s) (marché fermé ou données insuffisantes)")
     
     return signals
 
 # ==========================================
-# INTERFACE UTILISATEUR AMÉLIORÉE
+# INTERFACE UTILISATEUR
 # ==========================================
 
 st.title("⚡ Bluestar M15 Sniper Pro")
@@ -445,12 +434,12 @@ st.caption(f"Scanner Haute Précision | {len(ASSETS)} actifs surveillés")
 
 col1, col2 = st.columns([3, 1])
 with col1:
-    scan_button = st.button("🎯 LANCER LE SCAN", type="primary", use_container_width=True)
+    scan_button = st.button("🎯 LANCER LE SCAN", type="primary", width="stretch")
 with col2:
-    if st.button("🗑️ Vider Cache"):
+    if st.button("🗑️ Cache", width="content"):
         st.session_state.cache = {}
         st.session_state.cache_time = {}
-        st.success("Cache vidé !")
+        st.success("✓")
 
 if scan_button:
     api = OandaClient()
@@ -464,29 +453,27 @@ if scan_button:
     
     st.divider()
     
-    # Métriques de performance
+    # Métriques
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("Signaux Détectés", len(results))
+        st.metric("Signaux", len(results))
     with col2:
-        st.metric("Temps de Scan", f"{scan_duration:.1f}s")
+        st.metric("Scan", f"{scan_duration:.1f}s")
     with col3:
-        st.metric("Requêtes API", api.request_count)
+        st.metric("Requêtes", api.request_count)
     
     st.divider()
     
     if not results:
         st.info("😴 **Aucun signal valide détecté**")
-        st.caption("Le scanner recherche : RSI(7) proche/croise 50 + HMA(20) change de couleur + MTF aligné (H1/H4/D1)")
+        st.caption("Critères : RSI(7) proche/croise 50 + HMA(20) change de couleur + MTF aligné")
     
     else:
-        # Trier par force du signal
         results_sorted = sorted(results, key=lambda x: (x['strength'] == 'FORT', x['mtf_score']), reverse=True)
         
-        st.success(f"🎯 **{len(results)} opportunité(s) détectée(s) !**")
+        st.success(f"🎯 **{len(results)} opportunité(s) !**")
         
         for sig in results_sorted:
-            # Couleurs selon type
             if sig['type'] == 'BUY':
                 icon = "🚀"
                 bg_color = "#d4edda"
@@ -498,14 +485,11 @@ if scan_button:
                 border_color = "#dc3545"
                 text_color = "#721c24"
             
-            # Badge de force
             strength_color = "#ffc107" if sig['strength'] == "MOYEN" else "#28a745"
             
-            # Construction du MTF display
-            mtf_display = " | ".join([f"{tf}: {'✅' if v == (1 if sig['type'] == 'BUY' else -1) else '❌'}" 
+            mtf_display = " | ".join([f"{tf}: {'✅' if v == (1 if sig['type'] == 'BUY' else -1) else ('⚠️' if v == 0 else '❌')}" 
                                      for tf, v in sig['mtf_trends'].items()])
             
-            # Carte de signal
             st.markdown(f"""
             <div style="
                 background-color: {bg_color};
@@ -546,4 +530,4 @@ if scan_button:
             </div>
             """, unsafe_allow_html=True)
     
-    st.caption(f"⏰ Scan terminé à {datetime.now().strftime('%H:%M:%S')} | Cache actif: {len(st.session_state.cache)} symboles")
+    st.caption(f"⏰ {datetime.now().strftime('%H:%M:%S')} | Cache: {len(st.session_state.cache)} items")
