@@ -863,50 +863,60 @@ def display_signal(sig: Dict):
     # Warning badge si divergence
     warning_html = ""
     if sig.get('warning'):
-        warning_html = f'<div class="score-badge" style="background-color: #ff9800; color: white;">{sig["warning"]}</div>'
+        warning_html = f'<div class="score-badge" style="background-color: #ff9800; color: white; margin-top: 5px;">{sig["warning"]}</div>'
     
-    html_content = f"""
-    <div style="background-color: {bg_color}; border-left: 5px solid {border_color}; padding: 20px; border-radius: 10px; margin-bottom: 15px; color: {text_color}; overflow: hidden; word-wrap: break-word;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-            <div style="flex: 1; min-width: 200px;">
-                <h2 style="margin: 0; color: {text_color};">{icon} {sig['symbol']}</h2>
-                <span style="font-weight: bold; font-size: 1.3em;">{sig['type']} SIGNAL</span>
+    # Utilisation de st.container pour forcer le rendu complet
+    with st.container():
+        html_content = f"""
+        <div style="background-color: {bg_color}; border-left: 5px solid {border_color}; padding: 20px; border-radius: 10px; margin-bottom: 15px; color: {text_color}; overflow: hidden; word-wrap: break-word; width: 100%; box-sizing: border-box;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <div style="flex: 1; min-width: 200px;">
+                    <h2 style="margin: 0 0 5px 0; color: {text_color}; font-size: 1.8em;">{icon} {sig['symbol']}</h2>
+                    <span style="font-weight: bold; font-size: 1.2em;">{sig['type']} SIGNAL</span>
+                </div>
+                <div style="text-align: right; flex-shrink: 0;">
+                    <div style="font-size: 2.5em; font-weight: bold; color: {border_color}; line-height: 1;">{sig['total_score']}<span style="font-size: 0.5em;">/10</span></div>
+                    <div class="score-badge" style="background-color: {sig['quality_color']}; color: white; margin-top: 5px;">{sig['quality']}</div>
+                    <div class="score-badge" style="background-color: #6c757d; color: white; margin-top: 5px;">GPS: {sig['mtf']['quality']}</div>
+                    {warning_html}
+                </div>
             </div>
-            <div style="text-align: right; flex-shrink: 0;">
-                <div style="font-size: 2.5em; font-weight: bold; color: {border_color};">{sig['total_score']}<span style="font-size: 0.5em;">/10</span></div>
-                <div class="score-badge" style="background-color: {sig['quality_color']}; color: white;">{sig['quality']}</div>
-                <div class="score-badge" style="background-color: #6c757d; color: white;">GPS: {sig['mtf']['quality']}</div>
-                {warning_html}
+            
+            <div style="margin: 15px 0;">
+                <div style="font-size: 1.4em; font-weight: bold; margin-bottom: 8px;">Prix : {sig['price']:.5f}</div>
+                <div style="font-size: 1.1em; color: {text_color};">ATR M15 : {atr_display}</div>
+            </div>
+            
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid {border_color};">
+                <div style="margin-bottom: 12px; word-break: break-word;">
+                    <strong style="font-size: 1.05em;">📊 RSI(7) [{sig['rsi']['score']}/3]:</strong> {sig['rsi']['value']:.1f}<br>
+                    <span style="font-size: 0.9em; color: {text_color};">{sig['rsi']['details']}</span>
+                </div>
+                
+                <div style="margin-bottom: 12px; word-break: break-word;">
+                    <strong style="font-size: 1.05em;">📈 HMA(20) [{sig['hma']['score']}/2]:</strong> {sig['hma']['color']}<br>
+                    <span style="font-size: 0.9em; color: {text_color};">{sig['hma']['details']}</span>
+                </div>
+                
+                <div style="margin-bottom: 12px; word-break: break-word;">
+                    <strong style="font-size: 1.05em;">🌍 MTF GPS [{sig['mtf']['score']}/3] - Qualité: {sig['mtf']['quality']}</strong><br>
+                    <span style="font-size: 0.9em; color: {text_color};">Alignement: {sig['mtf']['alignment']} | {sig['mtf']['details']}</span>
+                </div>
+                
+                <div style="margin-bottom: 12px; word-break: break-word;">
+                    <strong style="font-size: 1.05em;">💪 Currency Strength [{sig['currency_strength']['score']}/2]:</strong><br>
+                    <span style="font-size: 0.9em; color: {text_color};">{sig['currency_strength']['details']}</span><br>
+                    <span style="font-size: 0.85em; color: #666;">Scores: {sig['currency_strength']['base_score']:.2f}% vs {sig['currency_strength']['quote_score']:.2f}% | {sig['currency_strength']['rank_info']}</span>
+                </div>
+                
+                <div style="margin-top: 15px; padding: 12px; background-color: rgba(255,255,255,0.3); border-radius: 5px; font-size: 0.9em; word-break: break-word;">
+                    {mtf_html}
+                </div>
             </div>
         </div>
-        <div style="font-size: 1.5em; font-weight: bold; margin-bottom: 10px;">Prix : {sig['price']:.5f}</div>
-        <div style="font-size: 1.1em; color: {text_color}; margin-bottom: 15px;">ATR M15 : {atr_display}</div>
-        <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid {border_color};">
-            <div style="margin-bottom: 10px; word-break: break-word;">
-                <strong>📊 RSI(7) [{sig['rsi']['score']}/3]:</strong> {sig['rsi']['value']:.1f}<br>
-                <span style="font-size: 0.9em;">{sig['rsi']['details']}</span>
-            </div>
-            <div style="margin-bottom: 10px; word-break: break-word;">
-                <strong>📈 HMA(20) [{sig['hma']['score']}/2]:</strong> {sig['hma']['color']}<br>
-                <span style="font-size: 0.9em;">{sig['hma']['details']}</span>
-            </div>
-            <div style="margin-bottom: 10px; word-break: break-word;">
-                <strong>🌍 MTF GPS [{sig['mtf']['score']}/3] - Qualité: {sig['mtf']['quality']}</strong><br>
-                <span style="font-size: 0.9em;">Alignement: {sig['mtf']['alignment']} | {sig['mtf']['details']}</span>
-            </div>
-            <div style="margin-bottom: 10px; word-break: break-word;">
-                <strong>💪 Currency Strength [{sig['currency_strength']['score']}/2]:</strong><br>
-                <span style="font-size: 0.9em;">{sig['currency_strength']['details']}</span><br>
-                <span style="font-size: 0.85em; color: #666;">Scores: {sig['currency_strength']['base_score']:.2f}% vs {sig['currency_strength']['quote_score']:.2f}% | {sig['currency_strength']['rank_info']}</span>
-            </div>
-            <div style="margin-top: 10px; padding: 10px; background-color: rgba(255,255,255,0.3); border-radius: 5px; font-size: 0.9em; word-break: break-word;">
-                {mtf_html}
-            </div>
-        </div>
-    </div>
-    """
-    
-    st.markdown(html_content, unsafe_allow_html=True)
+        """
+        
+        st.markdown(html_content, unsafe_allow_html=True)
 
 # ==========================================
 # INTERFACE UTILISATEUR
