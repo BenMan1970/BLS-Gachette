@@ -16,7 +16,7 @@ st.set_page_config(page_title="Bluestar M15 Sniper Pro", layout="centered", page
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
-# CSS amélioré
+# CSS amélioré avec meilleure gestion du HTML
 st.markdown("""
 <style>
     .stButton>button {
@@ -42,6 +42,10 @@ st.markdown("""
         font-size: 1em;
         font-weight: bold;
         margin: 2px;
+    }
+    /* Fix pour éviter l'affichage du code HTML brut */
+    div[data-testid="stMarkdownContainer"] pre {
+        display: none !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -822,7 +826,7 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
 # ==========================================
 
 def display_signal(sig: Dict):
-    """Affiche un signal formaté"""
+    """Affiche un signal formaté avec HTML"""
     if sig['type'] == 'BUY':
         icon = "🚀"
         bg_color = "#d4edda"
