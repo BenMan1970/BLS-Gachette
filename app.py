@@ -61,12 +61,26 @@ ASSETS = [
     "US30_USD", "NAS100_USD", "SPX500_USD"
 ]
 
+# Liste des pairs Forex pour Currency Strength
+FOREX_PAIRS = [
+    "EUR_USD", "GBP_USD", "USD_JPY", "USD_CHF", "AUD_USD", "USD_CAD", "NZD_USD",
+    "EUR_GBP", "EUR_JPY", "EUR_CHF", "EUR_CAD", "EUR_AUD", "EUR_NZD",
+    "GBP_JPY", "GBP_CHF", "GBP_CAD", "GBP_AUD", "GBP_NZD",
+    "AUD_JPY", "AUD_CAD", "AUD_CHF", "AUD_NZD",
+    "CAD_JPY", "CAD_CHF",
+    "NZD_JPY", "NZD_CAD", "NZD_CHF",
+    "CHF_JPY"
+]
+
 # Cache réduit pour alertes rapides
 if 'cache' not in st.session_state:
     st.session_state.cache = {}
     st.session_state.cache_time = {}
+    st.session_state.currency_strength_cache = None
+    st.session_state.currency_strength_time = 0
 
 CACHE_DURATION = 30
+CURRENCY_STRENGTH_CACHE_DURATION = 300  # 5 minutes pour Currency Strength
 
 # ==========================================
 # MOTEUR API ROBUSTE
@@ -258,6 +272,152 @@ def get_colored_hma(df: pd.DataFrame, length: int = 20) -> tuple:
     trend_series = pd.Series(trend_array, index=df.index)
     
     return hma, trend_series
+
+# ==========================================
+# CURRENCY STRENGTH ENGINE (Market Map Pro)
+# ==========================================
+
+def calculate_currency_strength(api: OandaClient, lookback_days: int = 1) -> Dict[str, float]:
+    """
+    Calcule le score de force pour chaque devise (logique Market Map Pro)
+    Returns: Dict[currency, weighted_score]
+    """
+    # Vérifier le cache
+    cache_age = time.time() - st.session_state.currency_strength_time
+    if st.session_state.currency_strength_cache and cache_age < CURRENCY_STRENGTH_CACHE_DURATION:
+        return st.session_state.currency_strength_cache
+    
+    # Récupérer les données Forex
+    forex_data = {}
+    for pair in FOREX_PAIRS:
+        try:
+            df = api.get_candles(pair, "D", count=lookback_days + 5)
+            if df is not None and len(df) > lookback_days:
+                now = df['close'].iloc[-1]
+                past = df['close'].shift(lookback_days).iloc[-1]
+                pct = (now - past) / past * 100
+                forex_data[pair] = pct
+        except:
+            continue
+    
+    # Construire les données par devise
+    data = {}
+    for symbol, pct in forex_data.items():
+        parts = symbol.split('_')
+        if len(parts) != 2:
+            continue
+        base, quote = parts[0], parts[1]
+        
+        if base not in data:
+            data[base] = []
+        if quote not in data:
+            data[quote] = []
+        
+        data[base].append({'pct': pct, 'other': quote})
+        data[quote].append({'pct': -pct, 'other': base})
+    
+    # Algorithme "Smart Weighted Score" (de Market Map Pro)
+    currency_scores = {}
+    
+    for curr, items in data.items():
+        score = 0
+        valid_items = 0
+        
+        for item in items:
+            opponent = item['other']
+            val = item['pct']
+            
+            # Pondération : USD, EUR, JPY comptent double
+            weight = 2.0 if opponent in ['USD', 'EUR', 'JPY'] else 1.0
+            
+            score += (val * weight)
+            valid_items += weight
+        
+        # Score final normalisé
+        final_score = score / valid_items if valid_items > 0 else 0
+        currency_scores[curr] = final_score
+    
+    # Mise en cache
+    st.session_state.currency_strength_cache = currency_scores
+    st.session_state.currency_strength_time = time.time()
+    
+    return currency_scores
+
+def calculate_currency_strength_score(api: OandaClient, symbol: str, direction: str) -> Dict:
+    """
+    Score Currency Strength : 0-2 points
+    Analyse la force relative des devises base/quote
+    """
+    # Ignorer les non-Forex
+    if symbol not in FOREX_PAIRS:
+        return {
+            'score': 0,
+            'details': 'Non-Forex',
+            'base_score': 0,
+            'quote_score': 0,
+            'rank_info': 'N/A'
+        }
+    
+    parts = symbol.split('_')
+    if len(parts) != 2:
+        return {'score': 0, 'details': 'Format invalide', 'base_score': 0, 'quote_score': 0, 'rank_info': 'N/A'}
+    
+    base, quote = parts[0], parts[1]
+    
+    # Récupérer les scores de force
+    try:
+        strength_scores = calculate_currency_strength(api)
+    except:
+        return {'score': 0, 'details': 'Erreur calcul', 'base_score': 0, 'quote_score': 0, 'rank_info': 'N/A'}
+    
+    if base not in strength_scores or quote not in strength_scores:
+        return {'score': 0, 'details': 'Données manquantes', 'base_score': 0, 'quote_score': 0, 'rank_info': 'N/A'}
+    
+    base_score = strength_scores[base]
+    quote_score = strength_scores[quote]
+    
+    # Classement des devises
+    sorted_currencies = sorted(strength_scores.items(), key=lambda x: x[1], reverse=True)
+    base_rank = next(i for i, (curr, _) in enumerate(sorted_currencies, 1) if curr == base)
+    quote_rank = next(i for i, (curr, _) in enumerate(sorted_currencies, 1) if curr == quote)
+    total_currencies = len(sorted_currencies)
+    
+    score = 0
+    details = []
+    
+    if direction == 'BUY':
+        # BUY base/quote : on veut base forte et quote faible
+        if base_rank <= 3 and quote_rank >= total_currencies - 2:
+            score = 2
+            details.append(f"✅ {base} TOP3 (#{base_rank}) & {quote} BOTTOM3 (#{quote_rank})")
+        elif base_score > quote_score:
+            score = 1
+            details.append(f"📊 {base} > {quote} (Δ: {base_score - quote_score:+.2f}%)")
+        else:
+            score = 0
+            details.append(f"⚠️ Divergence : {quote} plus fort que {base}")
+    
+    else:  # SELL
+        # SELL base/quote : on veut quote forte et base faible
+        if quote_rank <= 3 and base_rank >= total_currencies - 2:
+            score = 2
+            details.append(f"✅ {quote} TOP3 (#{quote_rank}) & {base} BOTTOM3 (#{base_rank})")
+        elif quote_score > base_score:
+            score = 1
+            details.append(f"📊 {quote} > {base} (Δ: {quote_score - base_score:+.2f}%)")
+        else:
+            score = 0
+            details.append(f"⚠️ Divergence : {base} plus fort que {quote}")
+    
+    rank_info = f"{base}:#{base_rank} vs {quote}:#{quote_rank}"
+    
+    return {
+        'score': score,
+        'details': ' | '.join(details),
+        'base_score': base_score,
+        'quote_score': quote_score,
+        'rank_info': rank_info
+    }
 
 # ==========================================
 # NOUVELLE LOGIQUE MTF GPS
@@ -495,16 +655,17 @@ def calculate_mtf_score_gps(api: OandaClient, symbol: str, direction: str) -> Di
     }
 
 # ==========================================
-# SCANNER AVEC SCORING GPS
+# SCANNER AVEC SCORING GPS + CURRENCY STRENGTH
 # ==========================================
 
-def run_sniper_scan(api: OandaClient, min_score: int = 3) -> List[Dict]:
+def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
     """
-    Scanner avec système de scoring GPS amélioré
-    Score total : 0-8 points
+    Scanner avec système de scoring GPS + Currency Strength
+    Score total : 0-10 points
     - RSI : 0-3 points
     - HMA : 0-2 points
     - MTF GPS : 0-3 points
+    - Currency Strength : 0-2 points
     """
     signals = []
     skipped = 0
@@ -512,6 +673,16 @@ def run_sniper_scan(api: OandaClient, min_score: int = 3) -> List[Dict]:
     progress_bar = st.progress(0)
     status_text = st.empty()
     total = len(ASSETS)
+    
+    # Pré-calculer Currency Strength une seule fois
+    status_text.text("🌍 Calcul de la force des devises...")
+    try:
+        calculate_currency_strength(api)
+        status_text.text("✅ Currency Strength calculé")
+    except:
+        status_text.text("⚠️ Erreur Currency Strength")
+    
+    time.sleep(1)
     
     for i, symbol in enumerate(ASSETS):
         progress_bar.progress((i + 1) / total)
@@ -541,13 +712,17 @@ def run_sniper_scan(api: OandaClient, min_score: int = 3) -> List[Dict]:
             if rsi_buy['score'] > 0:
                 hma_buy = calculate_hma_score(hma_trend, 'BUY')
                 mtf_buy = calculate_mtf_score_gps(api, symbol, 'BUY')
+                cs_buy = calculate_currency_strength_score(api, symbol, 'BUY')
                 
-                total_score = rsi_buy['score'] + hma_buy['score'] + mtf_buy['score']
+                total_score = rsi_buy['score'] + hma_buy['score'] + mtf_buy['score'] + cs_buy['score']
                 
                 if total_score >= min_score:
                     # Déterminer la qualité
-                    if total_score >= 7 and mtf_buy['quality'] in ['A+', 'A']:
-                        quality = "🔥 EXCELLENT"
+                    if total_score >= 9 and mtf_buy['quality'] in ['A+', 'A'] and cs_buy['score'] == 2:
+                        quality = "🔥 PREMIUM"
+                        quality_color = "#ff6b00"
+                    elif total_score >= 8 and mtf_buy['quality'] in ['A+', 'A']:
+                        quality = "💎 EXCELLENT"
                         quality_color = "#28a745"
                     elif total_score >= 6:
                         quality = "⭐ FORT"
@@ -558,6 +733,14 @@ def run_sniper_scan(api: OandaClient, min_score: int = 3) -> List[Dict]:
                     else:
                         quality = "⚠️ MOYEN"
                         quality_color = "#6c757d"
+                    
+                    # Déclassement si divergence Currency Strength
+                    warning = ""
+                    if cs_buy['score'] == 0 and symbol in FOREX_PAIRS:
+                        if quality in ["🔥 PREMIUM", "💎 EXCELLENT"]:
+                            quality = "⭐ FORT"
+                            quality_color = "#ffc107"
+                        warning = "⚠️ Divergence devise"
                     
                     signals.append({
                         "symbol": symbol,
@@ -567,9 +750,11 @@ def run_sniper_scan(api: OandaClient, min_score: int = 3) -> List[Dict]:
                         "total_score": total_score,
                         "quality": quality,
                         "quality_color": quality_color,
+                        "warning": warning,
                         "rsi": rsi_buy,
                         "hma": hma_buy,
-                        "mtf": mtf_buy
+                        "mtf": mtf_buy,
+                        "currency_strength": cs_buy
                     })
             
             # 4. Test SELL
@@ -577,12 +762,16 @@ def run_sniper_scan(api: OandaClient, min_score: int = 3) -> List[Dict]:
             if rsi_sell['score'] > 0:
                 hma_sell = calculate_hma_score(hma_trend, 'SELL')
                 mtf_sell = calculate_mtf_score_gps(api, symbol, 'SELL')
+                cs_sell = calculate_currency_strength_score(api, symbol, 'SELL')
                 
-                total_score = rsi_sell['score'] + hma_sell['score'] + mtf_sell['score']
+                total_score = rsi_sell['score'] + hma_sell['score'] + mtf_sell['score'] + cs_sell['score']
                 
                 if total_score >= min_score:
-                    if total_score >= 7 and mtf_sell['quality'] in ['A+', 'A']:
-                        quality = "🔥 EXCELLENT"
+                    if total_score >= 9 and mtf_sell['quality'] in ['A+', 'A'] and cs_sell['score'] == 2:
+                        quality = "🔥 PREMIUM"
+                        quality_color = "#ff6b00"
+                    elif total_score >= 8 and mtf_sell['quality'] in ['A+', 'A']:
+                        quality = "💎 EXCELLENT"
                         quality_color = "#28a745"
                     elif total_score >= 6:
                         quality = "⭐ FORT"
@@ -594,6 +783,13 @@ def run_sniper_scan(api: OandaClient, min_score: int = 3) -> List[Dict]:
                         quality = "⚠️ MOYEN"
                         quality_color = "#6c757d"
                     
+                    warning = ""
+                    if cs_sell['score'] == 0 and symbol in FOREX_PAIRS:
+                        if quality in ["🔥 PREMIUM", "💎 EXCELLENT"]:
+                            quality = "⭐ FORT"
+                            quality_color = "#ffc107"
+                        warning = "⚠️ Divergence devise"
+                    
                     signals.append({
                         "symbol": symbol,
                         "type": "SELL",
@@ -602,9 +798,11 @@ def run_sniper_scan(api: OandaClient, min_score: int = 3) -> List[Dict]:
                         "total_score": total_score,
                         "quality": quality,
                         "quality_color": quality_color,
+                        "warning": warning,
                         "rsi": rsi_sell,
                         "hma": hma_sell,
-                        "mtf": mtf_sell
+                        "mtf": mtf_sell,
+                        "currency_strength": cs_sell
                     })
         
         except Exception:
@@ -658,6 +856,11 @@ def display_signal(sig: Dict):
     # Construction du HTML
     atr_display = f"{sig['atr_m15']:.5f}" if sig['atr_m15'] < 1 else f"{sig['atr_m15']:.2f}"
     
+    # Warning badge si divergence
+    warning_html = ""
+    if sig.get('warning'):
+        warning_html = f'<div class="score-badge" style="background-color: #ff9800; color: white;">{sig["warning"]}</div>'
+    
     html_content = f"""
     <div style="background-color: {bg_color}; border-left: 5px solid {border_color}; padding: 20px; border-radius: 10px; margin-bottom: 15px; color: {text_color};">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -666,9 +869,10 @@ def display_signal(sig: Dict):
                 <span style="font-weight: bold; font-size: 1.3em;">{sig['type']} SIGNAL</span>
             </div>
             <div style="text-align: right;">
-                <div style="font-size: 2.5em; font-weight: bold; color: {border_color};">{sig['total_score']}<span style="font-size: 0.5em;">/8</span></div>
+                <div style="font-size: 2.5em; font-weight: bold; color: {border_color};">{sig['total_score']}<span style="font-size: 0.5em;">/10</span></div>
                 <div class="score-badge" style="background-color: {sig['quality_color']}; color: white;">{sig['quality']}</div>
                 <div class="score-badge" style="background-color: #6c757d; color: white;">GPS: {sig['mtf']['quality']}</div>
+                {warning_html}
             </div>
         </div>
         <div style="font-size: 1.5em; font-weight: bold; margin-bottom: 10px;">Prix : {sig['price']:.5f}</div>
@@ -686,6 +890,11 @@ def display_signal(sig: Dict):
                 <strong>🌍 MTF GPS [{sig['mtf']['score']}/3] - Qualité: {sig['mtf']['quality']}</strong><br>
                 <span style="font-size: 0.9em;">Alignement: {sig['mtf']['alignment']} | {sig['mtf']['details']}</span>
             </div>
+            <div style="margin-bottom: 10px;">
+                <strong>💪 Currency Strength [{sig['currency_strength']['score']}/2]:</strong><br>
+                <span style="font-size: 0.9em;">{sig['currency_strength']['details']}</span><br>
+                <span style="font-size: 0.85em; color: #666;">Scores: {sig['currency_strength']['base_score']:.2f}% vs {sig['currency_strength']['quote_score']:.2f}% | {sig['currency_strength']['rank_info']}</span>
+            </div>
             <div style="margin-top: 10px; padding: 10px; background-color: rgba(255,255,255,0.3); border-radius: 5px; font-size: 0.9em;">
                 {mtf_html}
             </div>
@@ -699,19 +908,21 @@ def display_signal(sig: Dict):
 # INTERFACE UTILISATEUR
 # ==========================================
 
-st.title("⚡ Bluestar M15 Sniper Pro")
-st.caption(f"Scanner GPS + Scoring System | {len(ASSETS)} actifs | Cache 30s")
+st.title("⚡ Bluestar M15 Sniper Pro + Currency Strength")
+st.caption(f"Scanner GPS + Currency Strength | {len(ASSETS)} actifs | Score max: 10/10")
 
 # Réglage du score minimum
 col1, col2, col3 = st.columns([2, 2, 1])
 with col1:
-    min_score = st.slider("Score minimum", 2, 8, 4, help="Score total sur 8 (RSI:3 + HMA:2 + MTF GPS:3)")
+    min_score = st.slider("Score minimum", 3, 10, 5, help="Score total sur 10 (RSI:3 + HMA:2 + MTF:3 + CS:2)")
 with col2:
     scan_button = st.button("🎯 LANCER LE SCAN", type="primary", use_container_width=True)
 with col3:
     if st.button("🗑️", use_container_width=True):
         st.session_state.cache = {}
         st.session_state.cache_time = {}
+        st.session_state.currency_strength_cache = None
+        st.session_state.currency_strength_time = 0
         st.success("✓")
 
 if scan_button:
@@ -719,7 +930,7 @@ if scan_button:
     
     start_time = time.time()
     
-    with st.spinner("🔎 Analyse GPS en cours..."):
+    with st.spinner("🔎 Analyse GPS + Currency Strength en cours..."):
         results = run_sniper_scan(api, min_score=min_score)
     
     scan_duration = time.time() - start_time
@@ -731,7 +942,7 @@ if scan_button:
     with col1:
         st.metric("Signaux", len(results))
     with col2:
-        st.metric("Score min", f"{min_score}/8")
+        st.metric("Score min", f"{min_score}/10")
     with col3:
         st.metric("Scan", f"{scan_duration:.1f}s")
     with col4:
@@ -740,16 +951,16 @@ if scan_button:
     st.divider()
     
     if not results:
-        st.info(f"😴 **Aucun signal ≥ {min_score}/8 points**")
+        st.info(f"😴 **Aucun signal ≥ {min_score}/10 points**")
         st.caption("💡 Essaye de baisser le score minimum ou attends la prochaine opportunité")
     
     else:
         # Tri par score décroissant
-        results_sorted = sorted(results, key=lambda x: (x['total_score'], x['mtf']['quality']), reverse=True)
+        results_sorted = sorted(results, key=lambda x: (x['total_score'], x['mtf']['quality'], x['currency_strength']['score']), reverse=True)
         
         st.success(f"🎯 **{len(results)} signal(aux) détecté(s) !**")
         
         for sig in results_sorted:
             display_signal(sig)
     
-    st.caption(f"⏰ {datetime.now().strftime('%H:%M:%S')} | Cache: {len(st.session_state.cache)} items | Score: RSI(3) + HMA(2) + MTF GPS(3) | Qualité GPS: A+/A/B/C")
+    st.caption(f"⏰ {datetime.now().strftime('%H:%M:%S')} | Score: RSI(3) + HMA(2) + MTF GPS(3) + Currency Strength(2) | 🔥 PREMIUM = 9-10/10")
