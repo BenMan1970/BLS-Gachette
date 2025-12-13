@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import oandapyV20
 import oandapyV20.endpoints.instruments as instruments
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 import logging
 from typing import Optional, Dict, List
@@ -746,6 +746,9 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
                             quality_color = "#ffc107"
                         warning = "⚠️ Divergence devise"
                     
+                    # Horodatage du signal
+                    signal_time_utc = datetime.now(timezone.utc)
+                    
                     signals.append({
                         "symbol": symbol,
                         "type": "BUY",
@@ -758,7 +761,8 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
                         "rsi": rsi_buy,
                         "hma": hma_buy,
                         "mtf": mtf_buy,
-                        "currency_strength": cs_buy
+                        "currency_strength": cs_buy,
+                        "timestamp_utc": signal_time_utc
                     })
             
             # 4. Test SELL
@@ -794,6 +798,9 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
                             quality_color = "#ffc107"
                         warning = "⚠️ Divergence devise"
                     
+                    # Horodatage du signal
+                    signal_time_utc = datetime.now(timezone.utc)
+                    
                     signals.append({
                         "symbol": symbol,
                         "type": "SELL",
@@ -806,7 +813,8 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
                         "rsi": rsi_sell,
                         "hma": hma_sell,
                         "mtf": mtf_sell,
-                        "currency_strength": cs_sell
+                        "currency_strength": cs_sell,
+                        "timestamp_utc": signal_time_utc
                     })
         
         except Exception:
@@ -836,10 +844,49 @@ def display_signal(sig: Dict):
         emoji_direction = "📉"
         color = "red"
     
+    # Calcul de l'heure locale (détection automatique du fuseau horaire du navigateur)
+    signal_utc = sig['timestamp_utc']
+    
+    # Fonction JavaScript pour détecter le fuseau horaire
+    timezone_js = """
+    <script>
+        const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const userOffset = new Date().getTimezoneOffset();
+        window.parent.postMessage({type: 'streamlit:setComponentValue', value: {timezone: userTimezone, offset: userOffset}}, '*');
+    </script>
+    """
+    
+    # Formater les heures
+    time_utc_str = signal_utc.strftime("%H:%M:%S")
+    date_str = signal_utc.strftime("%Y-%m-%d")
+    
+    # Calculer le temps écoulé
+    now_utc = datetime.now(timezone.utc)
+    elapsed = now_utc - signal_utc
+    elapsed_seconds = int(elapsed.total_seconds())
+    
+    if elapsed_seconds < 60:
+        freshness = f"il y a {elapsed_seconds}s"
+        freshness_color = "🟢"
+    elif elapsed_seconds < 300:  # < 5 min
+        freshness = f"il y a {elapsed_seconds // 60}min"
+        freshness_color = "🟢"
+    elif elapsed_seconds < 900:  # < 15 min
+        freshness = f"il y a {elapsed_seconds // 60}min"
+        freshness_color = "🟡"
+    else:
+        freshness = f"il y a {elapsed_seconds // 60}min"
+        freshness_color = "🔴"
+    
     # Expander coloré avec tous les infos importantes dans le titre
     expander_title = f"{icon} **{sig['symbol']}** {emoji_direction} {sig['type']} • Score: **{sig['total_score']}/10** • {sig['quality']}"
     
     with st.expander(expander_title, expanded=True):
+        # Affichage de l'horodatage en haut
+        st.markdown(f"**🕐 Signal généré :** {date_str} à {time_utc_str} UTC • {freshness_color} *{freshness}*")
+        
+        st.divider()
+        
         # En-tête avec badges colorés
         col1, col2, col3, col4, col5 = st.columns([1.5, 1, 1, 1, 1.5])
         
