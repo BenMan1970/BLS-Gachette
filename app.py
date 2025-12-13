@@ -826,75 +826,127 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
 # ==========================================
 
 def display_signal(sig: Dict):
-    """Affiche un signal formaté avec composants Streamlit natifs"""
+    """Affiche un signal formaté avec composants Streamlit natifs - VERSION COLORÉE"""
     if sig['type'] == 'BUY':
         icon = "🚀"
-        bg_color = "#d4edda"
-        border_color = "#28a745"
+        emoji_direction = "📈"
+        color = "green"
     else:
         icon = "📉"
-        bg_color = "#f8d7da"
-        border_color = "#dc3545"
+        emoji_direction = "📉"
+        color = "red"
     
-    # Créer un expander pour chaque signal
-    with st.expander(f"{icon} **{sig['symbol']}** - {sig['type']} SIGNAL - **{sig['total_score']}/10** - {sig['quality']}", expanded=True):
-        # Badges en colonnes
-        col1, col2, col3, col4 = st.columns([2, 2, 2, 2])
+    # Expander coloré avec tous les infos importantes dans le titre
+    expander_title = f"{icon} **{sig['symbol']}** {emoji_direction} {sig['type']} • Score: **{sig['total_score']}/10** • {sig['quality']}"
+    
+    with st.expander(expander_title, expanded=True):
+        # En-tête avec badges colorés
+        col1, col2, col3, col4, col5 = st.columns([1.5, 1, 1, 1, 1.5])
+        
         with col1:
-            st.metric("Score", f"{sig['total_score']}/10")
+            st.metric("💰 Prix", f"{sig['price']:.5f}", delta=None)
         with col2:
-            st.write(f"**Qualité:** {sig['quality']}")
+            st.metric("📊 Score", f"{sig['total_score']}/10")
         with col3:
-            st.write(f"**GPS:** {sig['mtf']['quality']}")
-        with col4:
-            if sig.get('warning'):
-                st.warning(sig['warning'])
-        
-        st.divider()
-        
-        # Prix et ATR
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("Prix", f"{sig['price']:.5f}")
-        with col2:
-            atr_display = f"{sig['atr_m15']:.5f}" if sig['atr_m15'] < 1 else f"{sig['atr_m15']:.2f}"
-            st.metric("ATR M15", atr_display)
-        
-        st.divider()
-        
-        # Indicateurs
-        st.markdown(f"**📊 RSI(7) [{sig['rsi']['score']}/3]:** {sig['rsi']['value']:.1f}")
-        st.caption(sig['rsi']['details'])
-        
-        st.markdown(f"**📈 HMA(20) [{sig['hma']['score']}/2]:** {sig['hma']['color']}")
-        st.caption(sig['hma']['details'])
-        
-        st.markdown(f"**🌍 MTF GPS [{sig['mtf']['score']}/3] - Qualité: {sig['mtf']['quality']}**")
-        st.caption(f"Alignement: {sig['mtf']['alignment']} | {sig['mtf']['details']}")
-        
-        st.markdown(f"**💪 Currency Strength [{sig['currency_strength']['score']}/2]:**")
-        st.caption(sig['currency_strength']['details'])
-        st.caption(f"Scores: {sig['currency_strength']['base_score']:.2f}% vs {sig['currency_strength']['quote_score']:.2f}% | {sig['currency_strength']['rank_info']}")
-        
-        st.divider()
-        
-        # Détails MTF
-        st.markdown("**📅 Analyse Multi-Timeframe:**")
-        for tf in ['D1', 'H4', 'H1']:
-            tf_data = sig['mtf']['analysis'][tf]
-            if tf_data['trend'] == 'Bullish':
-                trend_icon = "🟢"
-            elif tf_data['trend'] == 'Bearish':
-                trend_icon = "🔴"
-            elif tf_data['trend'] == 'Retracement':
-                trend_icon = "🟠"
+            if sig['type'] == 'BUY':
+                st.success(f"**{sig['quality']}**")
             else:
-                trend_icon = "⚪"
-            
-            atr_display = f"{tf_data['atr']:.5f}" if tf_data['atr'] < 1 else f"{tf_data['atr']:.2f}"
-            st.caption(f"{trend_icon} **{tf}:** {tf_data['trend']} (ATR: {atr_display})")
+                st.error(f"**{sig['quality']}**")
+        with col4:
+            st.info(f"**GPS: {sig['mtf']['quality']}**")
+        with col5:
+            atr_display = f"{sig['atr_m15']:.5f}" if sig['atr_m15'] < 1 else f"{sig['atr_m15']:.2f}"
+            st.metric("⚡ ATR M15", atr_display)
         
-        st.write("")  # Espacement
+        # Warning si divergence
+        if sig.get('warning'):
+            st.warning(f"⚠️ {sig['warning']}")
+        
+        st.divider()
+        
+        # Section indicateurs avec emojis et couleurs
+        col_left, col_right = st.columns(2)
+        
+        with col_left:
+            st.markdown(f"### 📊 RSI(7) - **{sig['rsi']['score']}/3** pts")
+            st.metric("Valeur RSI", f"{sig['rsi']['value']:.1f}")
+            if sig['rsi']['score'] >= 2:
+                st.success(sig['rsi']['details'])
+            elif sig['rsi']['score'] == 1:
+                st.info(sig['rsi']['details'])
+            else:
+                st.caption(sig['rsi']['details'])
+            
+            st.write("")
+            
+            st.markdown(f"### 📈 HMA(20) - **{sig['hma']['score']}/2** pts")
+            if sig['hma']['color'] == 'VERT':
+                st.success(f"🟢 **{sig['hma']['color']}**")
+            else:
+                st.error(f"🔴 **{sig['hma']['color']}**")
+            
+            if sig['hma']['score'] >= 1:
+                st.success(sig['hma']['details'])
+            else:
+                st.caption(sig['hma']['details'])
+        
+        with col_right:
+            st.markdown(f"### 🌍 MTF GPS - **{sig['mtf']['score']}/3** pts")
+            st.metric("Qualité GPS", sig['mtf']['quality'], delta=None)
+            st.metric("Alignement", sig['mtf']['alignment'])
+            
+            if sig['mtf']['score'] >= 2:
+                st.success(sig['mtf']['details'])
+            elif sig['mtf']['score'] == 1:
+                st.info(sig['mtf']['details'])
+            else:
+                st.caption(sig['mtf']['details'])
+            
+            st.write("")
+            
+            st.markdown(f"### 💪 Currency Strength - **{sig['currency_strength']['score']}/2** pts")
+            if sig['currency_strength']['score'] == 2:
+                st.success(sig['currency_strength']['details'])
+            elif sig['currency_strength']['score'] == 1:
+                st.info(sig['currency_strength']['details'])
+            else:
+                st.warning(sig['currency_strength']['details'])
+            
+            st.caption(f"📊 {sig['currency_strength']['base_score']:.2f}% vs {sig['currency_strength']['quote_score']:.2f}% | {sig['currency_strength']['rank_info']}")
+        
+        st.divider()
+        
+        # Analyse Multi-Timeframe en couleurs
+        st.markdown("### 📅 Analyse Multi-Timeframe Détaillée")
+        
+        col_d1, col_h4, col_h1 = st.columns(3)
+        
+        timeframes = ['D1', 'H4', 'H1']
+        columns = [col_d1, col_h4, col_h1]
+        
+        for tf, col in zip(timeframes, columns):
+            tf_data = sig['mtf']['analysis'][tf]
+            
+            with col:
+                # Emoji selon tendance
+                if tf_data['trend'] == 'Bullish':
+                    st.success(f"### 🟢 {tf}")
+                    st.markdown(f"**Bullish**")
+                elif tf_data['trend'] == 'Bearish':
+                    st.error(f"### 🔴 {tf}")
+                    st.markdown(f"**Bearish**")
+                elif tf_data['trend'] == 'Retracement':
+                    st.warning(f"### 🟠 {tf}")
+                    st.markdown(f"**Retracement**")
+                else:
+                    st.info(f"### ⚪ {tf}")
+                    st.markdown(f"**{tf_data['trend']}**")
+                
+                atr_display = f"{tf_data['atr']:.5f}" if tf_data['atr'] < 1 else f"{tf_data['atr']:.2f}"
+                st.caption(f"ATR: {atr_display}")
+                st.caption(f"{tf_data['details']}")
+        
+        st.write("")  # Espacement final
 
 # ==========================================
 # INTERFACE UTILISATEUR
