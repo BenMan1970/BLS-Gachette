@@ -826,7 +826,7 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
 # ==========================================
 
 def display_signal(sig: Dict):
-    """Affiche un signal formaté avec HTML"""
+    """Affiche un signal formaté avec tous les détails"""
     if sig['type'] == 'BUY':
         icon = "🚀"
         bg_color = "#d4edda"
@@ -838,11 +838,10 @@ def display_signal(sig: Dict):
         border_color = "#dc3545"
         text_color = "#721c24"
     
-    # Analyse MTF détaillée
-    mtf_details = []
+    # Construction des détails MTF
+    mtf_html = ""
     for tf in ['D1', 'H4', 'H1']:
         tf_data = sig['mtf']['analysis'][tf]
-        trend_icon = ""
         if tf_data['trend'] == 'Bullish':
             trend_icon = "🟢"
         elif tf_data['trend'] == 'Bearish':
@@ -853,70 +852,65 @@ def display_signal(sig: Dict):
             trend_icon = "⚪"
         
         atr_display = f"{tf_data['atr']:.5f}" if tf_data['atr'] < 1 else f"{tf_data['atr']:.2f}"
-        mtf_details.append(f"{trend_icon} <strong>{tf}:</strong> {tf_data['trend']} (ATR: {atr_display})")
+        mtf_html += f"{trend_icon} <strong>{tf}:</strong> {tf_data['trend']} (ATR: {atr_display})<br>"
     
-    mtf_html = "<br>".join(mtf_details)
-    
-    # Construction du HTML
+    # ATR M15
     atr_display = f"{sig['atr_m15']:.5f}" if sig['atr_m15'] < 1 else f"{sig['atr_m15']:.2f}"
     
-    # Warning badge si divergence
-    warning_html = ""
+    # Warning badge
+    warning_badge = ""
     if sig.get('warning'):
-        warning_html = f'<div class="score-badge" style="background-color: #ff9800; color: white; margin-top: 5px;">{sig["warning"]}</div>'
+        warning_badge = f'<div style="display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 1em; font-weight: bold; margin: 2px; background-color: #ff9800; color: white;">{sig["warning"]}</div>'
     
-    # Utilisation de st.container pour forcer le rendu complet
-    with st.container():
-        html_content = f"""
-        <div style="background-color: {bg_color}; border-left: 5px solid {border_color}; padding: 20px; border-radius: 10px; margin-bottom: 15px; color: {text_color}; overflow: hidden; word-wrap: break-word; width: 100%; box-sizing: border-box;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                <div style="flex: 1; min-width: 200px;">
-                    <h2 style="margin: 0 0 5px 0; color: {text_color}; font-size: 1.8em;">{icon} {sig['symbol']}</h2>
-                    <span style="font-weight: bold; font-size: 1.2em;">{sig['type']} SIGNAL</span>
-                </div>
-                <div style="text-align: right; flex-shrink: 0;">
-                    <div style="font-size: 2.5em; font-weight: bold; color: {border_color}; line-height: 1;">{sig['total_score']}<span style="font-size: 0.5em;">/10</span></div>
-                    <div class="score-badge" style="background-color: {sig['quality_color']}; color: white; margin-top: 5px;">{sig['quality']}</div>
-                    <div class="score-badge" style="background-color: #6c757d; color: white; margin-top: 5px;">GPS: {sig['mtf']['quality']}</div>
-                    {warning_html}
-                </div>
+    # HTML complet en une seule chaîne
+    html = f"""
+    <div style="background: {bg_color}; border-left: 5px solid {border_color}; border-radius: 10px; padding: 20px; margin-bottom: 20px; color: {text_color};">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+            <div>
+                <h2 style="margin: 0 0 5px 0; font-size: 1.8em;">{icon} {sig['symbol']}</h2>
+                <div style="font-weight: bold; font-size: 1.2em;">{sig['type']} SIGNAL</div>
             </div>
-            
-            <div style="margin: 15px 0;">
-                <div style="font-size: 1.4em; font-weight: bold; margin-bottom: 8px;">Prix : {sig['price']:.5f}</div>
-                <div style="font-size: 1.1em; color: {text_color};">ATR M15 : {atr_display}</div>
-            </div>
-            
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid {border_color};">
-                <div style="margin-bottom: 12px; word-break: break-word;">
-                    <strong style="font-size: 1.05em;">📊 RSI(7) [{sig['rsi']['score']}/3]:</strong> {sig['rsi']['value']:.1f}<br>
-                    <span style="font-size: 0.9em; color: {text_color};">{sig['rsi']['details']}</span>
-                </div>
-                
-                <div style="margin-bottom: 12px; word-break: break-word;">
-                    <strong style="font-size: 1.05em;">📈 HMA(20) [{sig['hma']['score']}/2]:</strong> {sig['hma']['color']}<br>
-                    <span style="font-size: 0.9em; color: {text_color};">{sig['hma']['details']}</span>
-                </div>
-                
-                <div style="margin-bottom: 12px; word-break: break-word;">
-                    <strong style="font-size: 1.05em;">🌍 MTF GPS [{sig['mtf']['score']}/3] - Qualité: {sig['mtf']['quality']}</strong><br>
-                    <span style="font-size: 0.9em; color: {text_color};">Alignement: {sig['mtf']['alignment']} | {sig['mtf']['details']}</span>
-                </div>
-                
-                <div style="margin-bottom: 12px; word-break: break-word;">
-                    <strong style="font-size: 1.05em;">💪 Currency Strength [{sig['currency_strength']['score']}/2]:</strong><br>
-                    <span style="font-size: 0.9em; color: {text_color};">{sig['currency_strength']['details']}</span><br>
-                    <span style="font-size: 0.85em; color: #666;">Scores: {sig['currency_strength']['base_score']:.2f}% vs {sig['currency_strength']['quote_score']:.2f}% | {sig['currency_strength']['rank_info']}</span>
-                </div>
-                
-                <div style="margin-top: 15px; padding: 12px; background-color: rgba(255,255,255,0.3); border-radius: 5px; font-size: 0.9em; word-break: break-word;">
-                    {mtf_html}
-                </div>
+            <div style="text-align: right;">
+                <div style="font-size: 2.5em; font-weight: bold; color: {border_color};">{sig['total_score']}<span style="font-size: 0.5em;">/10</span></div>
+                <div style="display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 1em; font-weight: bold; margin: 2px; background-color: {sig['quality_color']}; color: white;">{sig['quality']}</div>
+                <div style="display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 1em; font-weight: bold; margin: 2px; background-color: #6c757d; color: white;">GPS: {sig['mtf']['quality']}</div>
+                {warning_badge}
             </div>
         </div>
-        """
         
-        st.markdown(html_content, unsafe_allow_html=True)
+        <div style="font-size: 1.4em; font-weight: bold; margin-bottom: 5px;">Prix : {sig['price']:.5f}</div>
+        <div style="font-size: 1.1em; margin-bottom: 20px;">ATR M15 : {atr_display}</div>
+        
+        <div style="border-top: 2px solid {border_color}; padding-top: 15px;">
+            <div style="margin-bottom: 15px;">
+                <strong style="font-size: 1.05em;">📊 RSI(7) [{sig['rsi']['score']}/3]:</strong> {sig['rsi']['value']:.1f}<br>
+                <span style="font-size: 0.95em;">{sig['rsi']['details']}</span>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <strong style="font-size: 1.05em;">📈 HMA(20) [{sig['hma']['score']}/2]:</strong> {sig['hma']['color']}<br>
+                <span style="font-size: 0.95em;">{sig['hma']['details']}</span>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <strong style="font-size: 1.05em;">🌍 MTF GPS [{sig['mtf']['score']}/3] - Qualité: {sig['mtf']['quality']}</strong><br>
+                <span style="font-size: 0.95em;">Alignement: {sig['mtf']['alignment']} | {sig['mtf']['details']}</span>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <strong style="font-size: 1.05em;">💪 Currency Strength [{sig['currency_strength']['score']}/2]:</strong><br>
+                <span style="font-size: 0.95em;">{sig['currency_strength']['details']}</span><br>
+                <span style="font-size: 0.85em; color: #666;">Scores: {sig['currency_strength']['base_score']:.2f}% vs {sig['currency_strength']['quote_score']:.2f}% | {sig['currency_strength']['rank_info']}</span>
+            </div>
+            
+            <div style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.3); border-radius: 5px; font-size: 0.95em;">
+                {mtf_html}
+            </div>
+        </div>
+    </div>
+    """
+    
+    st.markdown(html, unsafe_allow_html=True)
 
 # ==========================================
 # INTERFACE UTILISATEUR
