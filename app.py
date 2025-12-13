@@ -964,6 +964,16 @@ if scan_button:
         
         st.success(f"🎯 **{len(results)} signal(aux) détecté(s) !**")
         
+        # Petit espacement avant les signaux
+        st.write("")
+        
+        # Script JS pour scroll automatique vers les résultats
+        st.markdown("""
+        <script>
+            window.parent.document.querySelector('[data-testid="stVerticalBlock"]').scrollIntoView({behavior: 'smooth', block: 'start'});
+        </script>
+        """, unsafe_allow_html=True)
+        
         for sig in results_sorted:
             display_signal(sig)
     
