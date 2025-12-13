@@ -711,6 +711,9 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
             current_price = df_m15['close'].iloc[-1]
             atr_m15 = calculate_atr(df_m15, 14).iloc[-1]
             
+            # IMPORTANT : Heure de la dernière bougie M15 (le vrai signal)
+            signal_time_utc = df_m15['time'].iloc[-1].to_pydatetime().replace(tzinfo=timezone.utc)
+            
             # 3. Test BUY
             rsi_buy = calculate_rsi_score(rsi_series, 'BUY')
             if rsi_buy['score'] > 0:
@@ -745,9 +748,6 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
                             quality = "⭐ FORT"
                             quality_color = "#ffc107"
                         warning = "⚠️ Divergence devise"
-                    
-                    # Horodatage du signal
-                    signal_time_utc = datetime.now(timezone.utc)
                     
                     signals.append({
                         "symbol": symbol,
@@ -798,9 +798,6 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
                             quality_color = "#ffc107"
                         warning = "⚠️ Divergence devise"
                     
-                    # Horodatage du signal
-                    signal_time_utc = datetime.now(timezone.utc)
-                    
                     signals.append({
                         "symbol": symbol,
                         "type": "SELL",
@@ -847,43 +844,53 @@ def display_signal(sig: Dict):
     # Calcul de l'heure locale (détection automatique du fuseau horaire du navigateur)
     signal_utc = sig['timestamp_utc']
     
-    # Fonction JavaScript pour détecter le fuseau horaire
-    timezone_js = """
-    <script>
-        const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const userOffset = new Date().getTimezoneOffset();
-        window.parent.postMessage({type: 'streamlit:setComponentValue', value: {timezone: userTimezone, offset: userOffset}}, '*');
-    </script>
-    """
-    
     # Formater les heures
     time_utc_str = signal_utc.strftime("%H:%M:%S")
     date_str = signal_utc.strftime("%Y-%m-%d")
+    day_name = signal_utc.strftime("%A")  # Nom du jour (Monday, Tuesday, etc.)
     
-    # Calculer le temps écoulé
+    # Calculer le temps écoulé RÉEL (depuis la bougie, pas depuis maintenant)
     now_utc = datetime.now(timezone.utc)
     elapsed = now_utc - signal_utc
     elapsed_seconds = int(elapsed.total_seconds())
     
-    if elapsed_seconds < 60:
+    # Déterminer si le marché est probablement ouvert (heuristique simple)
+    # Forex : fermé samedi/dimanche et vendredi 22h UTC - dimanche 22h UTC
+    is_weekend = signal_utc.weekday() >= 5  # Samedi = 5, Dimanche = 6
+    
+    # Si la bougie date de plus de 30 min, considérer comme "ancienne"
+    if elapsed_seconds > 1800:  # > 30 min
+        freshness = f"Bougie du {date_str} à {time_utc_str} UTC"
+        freshness_color = "⚪"
+        freshness_label = "(Marché probablement fermé)"
+    elif elapsed_seconds < 60:
         freshness = f"il y a {elapsed_seconds}s"
         freshness_color = "🟢"
+        freshness_label = ""
     elif elapsed_seconds < 300:  # < 5 min
         freshness = f"il y a {elapsed_seconds // 60}min"
         freshness_color = "🟢"
+        freshness_label = ""
     elif elapsed_seconds < 900:  # < 15 min
         freshness = f"il y a {elapsed_seconds // 60}min"
         freshness_color = "🟡"
+        freshness_label = ""
     else:
         freshness = f"il y a {elapsed_seconds // 60}min"
         freshness_color = "🔴"
+        freshness_label = "(Signal ancien)"
     
     # Expander coloré avec tous les infos importantes dans le titre
     expander_title = f"{icon} **{sig['symbol']}** {emoji_direction} {sig['type']} • Score: **{sig['total_score']}/10** • {sig['quality']}"
     
     with st.expander(expander_title, expanded=True):
-        # Affichage de l'horodatage en haut
-        st.markdown(f"**🕐 Signal généré :** {date_str} à {time_utc_str} UTC • {freshness_color} *{freshness}*")
+        # Affichage de l'horodatage en haut - CLARIFICATION avec détection marché fermé
+        if freshness_label:
+            st.markdown(f"**🕐 Bougie M15 :** {date_str} à {time_utc_str} UTC • {freshness_color} *{freshness_label}*")
+        else:
+            st.markdown(f"**🕐 Bougie M15 :** {date_str} à {time_utc_str} UTC • {freshness_color} *{freshness}*")
+        
+        st.caption("⏱️ Heure de formation du signal (dernière bougie M15 close)")
         
         st.divider()
         
