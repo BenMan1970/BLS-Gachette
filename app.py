@@ -28,16 +28,16 @@ st.markdown("""
     
     /* Background gradient */
     .stApp {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     }
     
     /* Main container */
     .main .block-container {
         padding-top: 2rem;
         padding-bottom: 2rem;
-        background: rgba(255, 255, 255, 0.95);
+        background: #ffffff;
         border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     }
     
     /* Buttons */
@@ -48,15 +48,17 @@ st.markdown("""
         font-weight: 700;
         font-size: 1.1em;
         border: none;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #5b6ff5 0%, #6b3fa0 100%);
         color: white;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 6px 20px rgba(91, 111, 245, 0.5);
         transition: all 0.3s ease;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     
     .stButton>button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        box-shadow: 0 8px 25px rgba(91, 111, 245, 0.7);
+        background: linear-gradient(135deg, #6b7ff7 0%, #7b4fb0 100%);
     }
     
     /* Signal cards */
@@ -65,7 +67,9 @@ st.markdown("""
         border-radius: 15px;
         margin-bottom: 15px;
         animation: slideIn 0.4s ease-out;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        background: #ffffff;
+        border: 2px solid #e0e0e0;
     }
     
     @keyframes slideIn {
@@ -92,93 +96,120 @@ st.markdown("""
     
     /* Premium badge */
     .badge-premium {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%);
         color: white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     
     /* Excellent badge */
     .badge-excellent {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
         color: white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     
     /* Fort badge */
     .badge-fort {
-        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        background: linear-gradient(135deg, #00ff88 0%, #00cc99 100%);
         color: white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     
     /* Bon badge */
     .badge-bon {
-        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        background: linear-gradient(135deg, #ffaa00 0%, #ff6600 100%);
         color: white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     
     /* Metrics */
     div[data-testid="stMetricValue"] {
         font-size: 1.8em;
         font-weight: 800;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #5b6ff5 0%, #6b3fa0 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
     
+    div[data-testid="stMetricLabel"] {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
     /* Expander */
     .streamlit-expanderHeader {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #5b6ff5 0%, #6b3fa0 100%);
         color: white !important;
         border-radius: 12px;
         font-weight: 700;
         padding: 15px;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 6px 20px rgba(91, 111, 245, 0.4);
+    }
+    
+    .streamlit-expanderHeader:hover {
+        box-shadow: 0 8px 25px rgba(91, 111, 245, 0.6);
     }
     
     /* Success/Error boxes */
     .element-container div[data-baseweb="notification"] {
         border-radius: 12px;
         border: none;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        font-weight: 600;
     }
     
     /* Divider */
     hr {
         border: none;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, #667eea, transparent);
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #5b6ff5, transparent);
         margin: 20px 0;
     }
     
     /* Title styling */
     h1 {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #5b6ff5 0%, #6b3fa0 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: 800;
         text-align: center;
         font-size: 2.5em;
         margin-bottom: 0.5rem;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
     }
     
     h2, h3 {
-        color: #667eea;
+        color: #2c3e50;
         font-weight: 700;
     }
     
     /* Progress bar */
     .stProgress > div > div > div {
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(90deg, #5b6ff5 0%, #6b3fa0 100%);
     }
     
     /* Slider */
     .stSlider > div > div > div {
-        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(90deg, #5b6ff5 0%, #6b3fa0 100%);
     }
     
     /* Info boxes with gradient borders */
     .stAlert {
         border-radius: 12px;
         border-left: 5px solid;
-        border-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%) 1;
+        border-image: linear-gradient(135deg, #5b6ff5 0%, #6b3fa0 100%) 1;
+        font-weight: 500;
+    }
+    
+    /* Caption text */
+    .caption, [data-testid="stCaptionContainer"] {
+        color: #555 !important;
+        font-weight: 500;
+    }
+    
+    /* Better text contrast */
+    p, span, div {
+        color: #2c3e50;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -839,25 +870,25 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
                 if total_score >= min_score:
                     if total_score >= 9 and mtf_buy['quality'] in ['A+', 'A'] and cs_buy['score'] == 2:
                         quality = "🔥 PREMIUM"
-                        quality_color = "#f093fb"
+                        quality_color = "#ff0080"
                     elif total_score >= 8 and mtf_buy['quality'] in ['A+', 'A']:
                         quality = "💎 EXCELLENT"
-                        quality_color = "#4facfe"
+                        quality_color = "#00d4ff"
                     elif total_score >= 6:
                         quality = "⭐ FORT"
-                        quality_color = "#43e97b"
+                        quality_color = "#00ff88"
                     elif total_score >= 5:
                         quality = "✓ BON"
-                        quality_color = "#fa709a"
+                        quality_color = "#ffaa00"
                     else:
                         quality = "⚠️ MOYEN"
-                        quality_color = "#a8a8a8"
+                        quality_color = "#666666"
                     
                     warning = ""
                     if cs_buy['score'] == 0 and symbol in FOREX_PAIRS:
                         if quality in ["🔥 PREMIUM", "💎 EXCELLENT"]:
                             quality = "⭐ FORT"
-                            quality_color = "#43e97b"
+                            quality_color = "#00ff88"
                         warning = "⚠️ Divergence devise"
                     
                     signals.append({
@@ -946,11 +977,11 @@ def display_signal(sig: Dict):
     if sig['type'] == 'BUY':
         icon = "🚀"
         emoji_direction = "📈"
-        card_gradient = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+        card_gradient = "linear-gradient(135deg, #5b6ff5 0%, #6b3fa0 100%)"
     else:
         icon = "📉"
         emoji_direction = "📉"
-        card_gradient = "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+        card_gradient = "linear-gradient(135deg, #ff0080 0%, #ff4500 100%)"
     
     signal_utc = sig['timestamp_utc']
     time_utc_str = signal_utc.strftime("%H:%M:%S")
@@ -1001,13 +1032,13 @@ def display_signal(sig: Dict):
             st.metric("📊 Score", f"{sig['total_score']}/10")
         with col3:
             st.markdown(f"""
-            <div style="background: {sig['quality_color']}; padding: 10px; border-radius: 12px; text-align: center; color: white; font-weight: bold;">
+            <div style="background: {sig['quality_color']}; padding: 12px; border-radius: 12px; text-align: center; color: white; font-weight: 800; font-size: 0.95em; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
                 {sig['quality']}
             </div>
             """, unsafe_allow_html=True)
         with col4:
             st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 10px; border-radius: 12px; text-align: center; color: white; font-weight: bold;">
+            <div style="background: linear-gradient(135deg, #00ff88 0%, #00cc99 100%); padding: 12px; border-radius: 12px; text-align: center; color: white; font-weight: 800; font-size: 0.95em; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
                 GPS: {sig['mtf']['quality']}
             </div>
             """, unsafe_allow_html=True)
@@ -1038,13 +1069,13 @@ def display_signal(sig: Dict):
             st.markdown(f"### 📈 HMA(20) - **{sig['hma']['score']}/2** pts")
             if sig['hma']['color'] == 'VERT':
                 st.markdown("""
-                <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 15px; border-radius: 12px; color: white; font-weight: bold; text-align: center;">
+                <div style="background: linear-gradient(135deg, #00ff88 0%, #00cc99 100%); padding: 15px; border-radius: 12px; color: white; font-weight: 800; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
                     🟢 VERT
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown("""
-                <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 15px; border-radius: 12px; color: white; font-weight: bold; text-align: center;">
+                <div style="background: linear-gradient(135deg, #ff0080 0%, #ff4500 100%); padding: 15px; border-radius: 12px; color: white; font-weight: 800; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
                     🔴 ROUGE
                 </div>
                 """, unsafe_allow_html=True)
@@ -1094,22 +1125,22 @@ def display_signal(sig: Dict):
             
             with col:
                 if tf_data['trend'] == 'Bullish':
-                    gradient = "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
+                    gradient = "linear-gradient(135deg, #00ff88 0%, #00cc99 100%)"
                     emoji = "🟢"
                 elif tf_data['trend'] == 'Bearish':
-                    gradient = "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+                    gradient = "linear-gradient(135deg, #ff0080 0%, #ff4500 100%)"
                     emoji = "🔴"
                 elif tf_data['trend'] == 'Retracement':
-                    gradient = "linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
+                    gradient = "linear-gradient(135deg, #ffaa00 0%, #ff6600 100%)"
                     emoji = "🟠"
                 else:
-                    gradient = "linear-gradient(135deg, #a8a8a8 0%, #d3d3d3 100%)"
+                    gradient = "linear-gradient(135deg, #666666 0%, #999999 100%)"
                     emoji = "⚪"
                 
                 st.markdown(f"""
-                <div style="background: {gradient}; padding: 15px; border-radius: 12px; color: white; text-align: center; margin-bottom: 10px;">
-                    <h3 style="margin: 0; color: white;">{emoji} {tf}</h3>
-                    <p style="margin: 5px 0 0 0; font-weight: bold;">{tf_data['trend']}</p>
+                <div style="background: {gradient}; padding: 15px; border-radius: 12px; color: white; text-align: center; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                    <h3 style="margin: 0; color: white; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">{emoji} {tf}</h3>
+                    <p style="margin: 5px 0 0 0; font-weight: 700; font-size: 1.1em;">{tf_data['trend']}</p>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -1123,9 +1154,9 @@ def display_signal(sig: Dict):
 
 st.title("⚡ Bluestar M15 Sniper Pro")
 st.markdown("""
-<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px;">
-    <h3 style="margin: 0; color: white;">🎯 Scanner GPS + Currency Strength</h3>
-    <p style="margin: 5px 0 0 0;">{} actifs • Score max: 10/10</p>
+<div style="background: linear-gradient(135deg, #5b6ff5 0%, #6b3fa0 100%); padding: 20px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.3);">
+    <h3 style="margin: 0; color: white; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">🎯 Scanner GPS + Currency Strength</h3>
+    <p style="margin: 5px 0 0 0; font-weight: 600; font-size: 1.1em;">{} actifs • Score max: 10/10</p>
 </div>
 """.format(len(ASSETS)), unsafe_allow_html=True)
 
@@ -1170,9 +1201,9 @@ if scan_button:
     
     if not results:
         st.markdown("""
-        <div style="background: linear-gradient(135deg, #a8a8a8 0%, #d3d3d3 100%); padding: 20px; border-radius: 12px; color: white; text-align: center;">
-            <h3 style="margin: 0; color: white;">😴 Aucun signal ≥ {}/10 points</h3>
-            <p style="margin: 10px 0 0 0;">💡 Essaie de baisser le score minimum</p>
+        <div style="background: linear-gradient(135deg, #666666 0%, #999999 100%); padding: 25px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.3);">
+            <h3 style="margin: 0; color: white; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">😴 Aucun signal ≥ {}/10 points</h3>
+            <p style="margin: 10px 0 0 0; font-weight: 600; font-size: 1.1em;">💡 Essaie de baisser le score minimum</p>
         </div>
         """.format(min_score), unsafe_allow_html=True)
     
@@ -1180,8 +1211,8 @@ if scan_button:
         results_sorted = sorted(results, key=lambda x: (x['total_score'], x['mtf']['quality'], x['currency_strength']['score']), reverse=True)
         
         st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 20px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px;">
-            <h3 style="margin: 0; color: white;">🎯 {len(results)} signal(aux) détecté(s) !</h3>
+        <div style="background: linear-gradient(135deg, #00ff88 0%, #00cc99 100%); padding: 25px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.3);">
+            <h3 style="margin: 0; color: white; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">🎯 {len(results)} signal(aux) détecté(s) !</h3>
         </div>
         """, unsafe_allow_html=True)
         
