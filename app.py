@@ -48,17 +48,16 @@ st.markdown("""
         font-weight: 700;
         font-size: 1.1em;
         border: none;
-        background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
+        background: #dc143c;
         color: white;
-        box-shadow: 0 6px 20px rgba(255, 8, 68, 0.5);
+        box-shadow: 0 6px 20px rgba(220, 20, 60, 0.5);
         transition: all 0.3s ease;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     
     .stButton>button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 30px rgba(255, 8, 68, 0.7);
-        background: linear-gradient(135deg, #ff1a55 0%, #ffbb99 100%);
+        box-shadow: 0 8px 30px rgba(220, 20, 60, 0.7);
+        background: #c41230;
     }
     
     /* Signal cards */
@@ -94,58 +93,28 @@ st.markdown("""
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
     }
     
-    /* Premium badge - EFFET NÉON */
+    /* Premium badge */
     .badge-premium {
         background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%);
         color: white;
-        text-shadow: 0 0 10px rgba(255, 0, 128, 0.8), 0 0 20px rgba(255, 140, 0, 0.6);
-        box-shadow: 0 0 20px rgba(255, 0, 128, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
-        animation: neonPulse 2s infinite;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
     
-    @keyframes neonPulse {
-        0%, 100% { 
-            box-shadow: 0 0 20px rgba(255, 0, 128, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-        50% { 
-            box-shadow: 0 0 30px rgba(255, 0, 128, 0.9), 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-    }
-    
-    /* Excellent badge - EFFET NÉON */
+    /* Excellent badge */
     .badge-excellent {
         background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
         color: white;
-        text-shadow: 0 0 10px rgba(0, 212, 255, 0.8), 0 0 20px rgba(0, 153, 255, 0.6);
-        box-shadow: 0 0 20px rgba(0, 212, 255, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
-        animation: neonPulseBlue 2s infinite;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
     
-    @keyframes neonPulseBlue {
-        0%, 100% { 
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-        50% { 
-            box-shadow: 0 0 30px rgba(0, 212, 255, 0.9), 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-    }
-    
-    /* Fort badge - EFFET NÉON */
+    /* Fort badge */
     .badge-fort {
         background: linear-gradient(135deg, #00ff88 0%, #00cc99 100%);
         color: white;
-        text-shadow: 0 0 10px rgba(0, 255, 136, 0.8), 0 0 20px rgba(0, 204, 153, 0.6);
-        box-shadow: 0 0 20px rgba(0, 255, 136, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
-        animation: neonPulseGreen 2s infinite;
-    }
-    
-    @keyframes neonPulseGreen {
-        0%, 100% { 
-            box-shadow: 0 0 20px rgba(0, 255, 136, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-        50% { 
-            box-shadow: 0 0 30px rgba(0, 255, 136, 0.9), 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
     
     /* Bon badge */
@@ -169,22 +138,29 @@ st.markdown("""
         color: #555;
     }
     
-    /* Expander - STYLE NÉON pour les actifs */
+    /* Expander - Actifs en GROS et GRAS */
     .streamlit-expanderHeader {
         background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
         color: white !important;
         border-radius: 12px;
-        font-weight: 700;
-        padding: 15px;
-        box-shadow: 0 0 25px rgba(0, 255, 136, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3);
+        font-weight: 900;
+        font-size: 1.4em;
+        padding: 20px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         border: 2px solid #00ff88;
         transition: all 0.3s ease;
     }
     
     .streamlit-expanderHeader:hover {
-        box-shadow: 0 0 35px rgba(0, 255, 136, 0.7), 0 8px 25px rgba(0, 0, 0, 0.4);
-        border-color: #00ffaa;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
         transform: translateY(-2px);
+    }
+    
+    /* Style pour le nom de l'actif en TRÈS GROS */
+    .streamlit-expanderHeader strong {
+        font-size: 1.6em !important;
+        font-weight: 900 !important;
+        letter-spacing: 2px;
     }
     
     /* Success/Error boxes */
@@ -205,14 +181,14 @@ st.markdown("""
     
     /* Title styling */
     h1 {
-        background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
+        background: linear-gradient(135deg, #dc143c 0%, #b01030 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: 800;
         text-align: center;
         font-size: 2.5em;
         margin-bottom: 0.5rem;
-        filter: drop-shadow(0 2px 4px rgba(255, 8, 68, 0.3));
+        filter: drop-shadow(0 2px 4px rgba(220, 20, 60, 0.3));
     }
     
     h2, h3 {
@@ -222,12 +198,12 @@ st.markdown("""
     
     /* Progress bar */
     .stProgress > div > div > div {
-        background: linear-gradient(90deg, #ff0844 0%, #ffb199 100%);
+        background: #dc143c;
     }
     
     /* Slider */
     .stSlider > div > div > div {
-        background: linear-gradient(90deg, #ff0844 0%, #ffb199 100%);
+        background: #dc143c;
     }
     
     /* Info boxes with gradient borders */
@@ -1055,11 +1031,11 @@ def display_signal(sig: Dict):
     expander_title = f"{icon} **{sig['symbol']}** {emoji_direction} {sig['type']} • Score: **{sig['total_score']}/10** • {sig['quality']}"
     
     with st.expander(expander_title, expanded=True):
-        # Header avec gradient et EFFET NÉON
+        # Header simple sans néon
         st.markdown(f"""
-        <div style="background: {card_gradient}; padding: 15px; border-radius: 12px; color: white; margin-bottom: 15px; border: 2px solid {border_color}; box-shadow: 0 0 30px rgba(0, 255, 136, 0.5), 0 6px 20px rgba(0, 0, 0, 0.3);">
-            <h3 style="margin: 0; color: white; text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);">🕐 {date_str} à {time_utc_str} UTC</h3>
-            <p style="margin: 5px 0 0 0; font-size: 1.1em; text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);">{freshness_emoji} {freshness} {freshness_label}</p>
+        <div style="background: {card_gradient}; padding: 15px; border-radius: 12px; color: white; margin-bottom: 15px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);">
+            <h3 style="margin: 0; color: white;">🕐 {date_str} à {time_utc_str} UTC</h3>
+            <p style="margin: 5px 0 0 0; font-size: 1.1em;">{freshness_emoji} {freshness} {freshness_label}</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -1072,7 +1048,7 @@ def display_signal(sig: Dict):
             st.metric("📊 Score", f"{sig['total_score']}/10")
         with col3:
             st.markdown(f"""
-            <div style="background: {sig['quality_color']}; padding: 12px; border-radius: 12px; text-align: center; color: white; font-weight: 800; font-size: 0.95em; box-shadow: 0 0 25px {sig['quality_color']}80, 0 4px 12px rgba(0,0,0,0.2); border: 2px solid {sig['quality_color']};">
+            <div style="background: {sig['quality_color']}; padding: 12px; border-radius: 12px; text-align: center; color: white; font-weight: 800; font-size: 0.95em; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
                 {sig['quality']}
             </div>
             """, unsafe_allow_html=True)
@@ -1213,9 +1189,9 @@ def display_signal(sig: Dict):
 
 st.title("⚡ Bluestar M15 Sniper Pro")
 st.markdown("""
-<div style="background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); padding: 20px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px; box-shadow: 0 0 30px rgba(255, 8, 68, 0.4), 0 6px 20px rgba(0,0,0,0.3);">
-    <h3 style="margin: 0; color: white; font-weight: 800; text-shadow: 0 0 15px rgba(255, 255, 255, 0.7);">🎯 Scanner GPS + Currency Strength</h3>
-    <p style="margin: 5px 0 0 0; font-weight: 600; font-size: 1.1em; text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);">{} actifs • Score max: 10/10</p>
+<div style="background: #dc143c; padding: 20px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px; box-shadow: 0 6px 20px rgba(220, 20, 60, 0.4);">
+    <h3 style="margin: 0; color: white; font-weight: 800;">🎯 Scanner GPS + Currency Strength</h3>
+    <p style="margin: 5px 0 0 0; font-weight: 600; font-size: 1.1em;">{} actifs • Score max: 10/10</p>
 </div>
 """.format(len(ASSETS)), unsafe_allow_html=True)
 
@@ -1270,8 +1246,8 @@ if scan_button:
         results_sorted = sorted(results, key=lambda x: (x['total_score'], x['mtf']['quality'], x['currency_strength']['score']), reverse=True)
         
         st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #98fb98 0%, #90ee90 100%); padding: 25px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px; box-shadow: 0 0 30px rgba(152, 251, 152, 0.5), 0 6px 20px rgba(0,0,0,0.2);">
-            <h3 style="margin: 0; color: white; font-weight: 800; text-shadow: 0 0 15px rgba(255, 255, 255, 0.7);">🎯 {len(results)} signal(aux) détecté(s) !</h3>
+        <div style="background: linear-gradient(135deg, #98fb98 0%, #90ee90 100%); padding: 25px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px; box-shadow: 0 6px 20px rgba(152, 251, 152, 0.4);">
+            <h3 style="margin: 0; color: white; font-weight: 800;">🎯 {len(results)} signal(aux) détecté(s) !</h3>
         </div>
         """, unsafe_allow_html=True)
         
