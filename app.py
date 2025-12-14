@@ -48,17 +48,17 @@ st.markdown("""
         font-weight: 700;
         font-size: 1.1em;
         border: none;
-        background: linear-gradient(135deg, #5b6ff5 0%, #6b3fa0 100%);
+        background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
         color: white;
-        box-shadow: 0 6px 20px rgba(91, 111, 245, 0.5);
+        box-shadow: 0 6px 20px rgba(255, 8, 68, 0.5);
         transition: all 0.3s ease;
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     
     .stButton>button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(91, 111, 245, 0.7);
-        background: linear-gradient(135deg, #6b7ff7 0%, #7b4fb0 100%);
+        box-shadow: 0 8px 30px rgba(255, 8, 68, 0.7);
+        background: linear-gradient(135deg, #ff1a55 0%, #ffbb99 100%);
     }
     
     /* Signal cards */
@@ -94,25 +94,58 @@ st.markdown("""
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
     }
     
-    /* Premium badge */
+    /* Premium badge - EFFET NÉON */
     .badge-premium {
         background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%);
         color: white;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        text-shadow: 0 0 10px rgba(255, 0, 128, 0.8), 0 0 20px rgba(255, 140, 0, 0.6);
+        box-shadow: 0 0 20px rgba(255, 0, 128, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
+        animation: neonPulse 2s infinite;
     }
     
-    /* Excellent badge */
+    @keyframes neonPulse {
+        0%, 100% { 
+            box-shadow: 0 0 20px rgba(255, 0, 128, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        50% { 
+            box-shadow: 0 0 30px rgba(255, 0, 128, 0.9), 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+    }
+    
+    /* Excellent badge - EFFET NÉON */
     .badge-excellent {
         background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
         color: white;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        text-shadow: 0 0 10px rgba(0, 212, 255, 0.8), 0 0 20px rgba(0, 153, 255, 0.6);
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
+        animation: neonPulseBlue 2s infinite;
     }
     
-    /* Fort badge */
+    @keyframes neonPulseBlue {
+        0%, 100% { 
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        50% { 
+            box-shadow: 0 0 30px rgba(0, 212, 255, 0.9), 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+    }
+    
+    /* Fort badge - EFFET NÉON */
     .badge-fort {
         background: linear-gradient(135deg, #00ff88 0%, #00cc99 100%);
         color: white;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        text-shadow: 0 0 10px rgba(0, 255, 136, 0.8), 0 0 20px rgba(0, 204, 153, 0.6);
+        box-shadow: 0 0 20px rgba(0, 255, 136, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
+        animation: neonPulseGreen 2s infinite;
+    }
+    
+    @keyframes neonPulseGreen {
+        0%, 100% { 
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        50% { 
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.9), 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
     }
     
     /* Bon badge */
@@ -122,32 +155,36 @@ st.markdown("""
         text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     
-    /* Metrics */
+    /* Metrics - couleurs douces */
     div[data-testid="stMetricValue"] {
         font-size: 1.8em;
         font-weight: 800;
-        background: linear-gradient(135deg, #5b6ff5 0%, #6b3fa0 100%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
     
     div[data-testid="stMetricLabel"] {
         font-weight: 600;
-        color: #2c3e50;
+        color: #555;
     }
     
-    /* Expander */
+    /* Expander - STYLE NÉON pour les actifs */
     .streamlit-expanderHeader {
-        background: linear-gradient(135deg, #5b6ff5 0%, #6b3fa0 100%);
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
         color: white !important;
         border-radius: 12px;
         font-weight: 700;
         padding: 15px;
-        box-shadow: 0 6px 20px rgba(91, 111, 245, 0.4);
+        box-shadow: 0 0 25px rgba(0, 255, 136, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3);
+        border: 2px solid #00ff88;
+        transition: all 0.3s ease;
     }
     
     .streamlit-expanderHeader:hover {
-        box-shadow: 0 8px 25px rgba(91, 111, 245, 0.6);
+        box-shadow: 0 0 35px rgba(0, 255, 136, 0.7), 0 8px 25px rgba(0, 0, 0, 0.4);
+        border-color: #00ffaa;
+        transform: translateY(-2px);
     }
     
     /* Success/Error boxes */
@@ -168,14 +205,14 @@ st.markdown("""
     
     /* Title styling */
     h1 {
-        background: linear-gradient(135deg, #5b6ff5 0%, #6b3fa0 100%);
+        background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         font-weight: 800;
         text-align: center;
         font-size: 2.5em;
         margin-bottom: 0.5rem;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        filter: drop-shadow(0 2px 4px rgba(255, 8, 68, 0.3));
     }
     
     h2, h3 {
@@ -185,20 +222,21 @@ st.markdown("""
     
     /* Progress bar */
     .stProgress > div > div > div {
-        background: linear-gradient(90deg, #5b6ff5 0%, #6b3fa0 100%);
+        background: linear-gradient(90deg, #ff0844 0%, #ffb199 100%);
     }
     
     /* Slider */
     .stSlider > div > div > div {
-        background: linear-gradient(90deg, #5b6ff5 0%, #6b3fa0 100%);
+        background: linear-gradient(90deg, #ff0844 0%, #ffb199 100%);
     }
     
     /* Info boxes with gradient borders */
     .stAlert {
         border-radius: 12px;
         border-left: 5px solid;
-        border-image: linear-gradient(135deg, #5b6ff5 0%, #6b3fa0 100%) 1;
+        border-image: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%) 1;
         font-weight: 500;
+        background: rgba(255, 255, 255, 0.95);
     }
     
     /* Caption text */
@@ -977,11 +1015,13 @@ def display_signal(sig: Dict):
     if sig['type'] == 'BUY':
         icon = "🚀"
         emoji_direction = "📈"
-        card_gradient = "linear-gradient(135deg, #5b6ff5 0%, #6b3fa0 100%)"
+        card_gradient = "linear-gradient(135deg, #00ff88 0%, #00d4ff 100%)"
+        border_color = "#00ff88"
     else:
         icon = "📉"
         emoji_direction = "📉"
         card_gradient = "linear-gradient(135deg, #ff0080 0%, #ff4500 100%)"
+        border_color = "#ff0080"
     
     signal_utc = sig['timestamp_utc']
     time_utc_str = signal_utc.strftime("%H:%M:%S")
@@ -1015,11 +1055,11 @@ def display_signal(sig: Dict):
     expander_title = f"{icon} **{sig['symbol']}** {emoji_direction} {sig['type']} • Score: **{sig['total_score']}/10** • {sig['quality']}"
     
     with st.expander(expander_title, expanded=True):
-        # Header avec gradient
+        # Header avec gradient et EFFET NÉON
         st.markdown(f"""
-        <div style="background: {card_gradient}; padding: 15px; border-radius: 12px; color: white; margin-bottom: 15px;">
-            <h3 style="margin: 0; color: white;">🕐 {date_str} à {time_utc_str} UTC</h3>
-            <p style="margin: 5px 0 0 0; font-size: 1.1em;">{freshness_emoji} {freshness} {freshness_label}</p>
+        <div style="background: {card_gradient}; padding: 15px; border-radius: 12px; color: white; margin-bottom: 15px; border: 2px solid {border_color}; box-shadow: 0 0 30px rgba(0, 255, 136, 0.5), 0 6px 20px rgba(0, 0, 0, 0.3);">
+            <h3 style="margin: 0; color: white; text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);">🕐 {date_str} à {time_utc_str} UTC</h3>
+            <p style="margin: 5px 0 0 0; font-size: 1.1em; text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);">{freshness_emoji} {freshness} {freshness_label}</p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -1032,13 +1072,13 @@ def display_signal(sig: Dict):
             st.metric("📊 Score", f"{sig['total_score']}/10")
         with col3:
             st.markdown(f"""
-            <div style="background: {sig['quality_color']}; padding: 12px; border-radius: 12px; text-align: center; color: white; font-weight: 800; font-size: 0.95em; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+            <div style="background: {sig['quality_color']}; padding: 12px; border-radius: 12px; text-align: center; color: white; font-weight: 800; font-size: 0.95em; box-shadow: 0 0 25px {sig['quality_color']}80, 0 4px 12px rgba(0,0,0,0.2); border: 2px solid {sig['quality_color']};">
                 {sig['quality']}
             </div>
             """, unsafe_allow_html=True)
         with col4:
             st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #00ff88 0%, #00cc99 100%); padding: 12px; border-radius: 12px; text-align: center; color: white; font-weight: 800; font-size: 0.95em; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+            <div style="background: linear-gradient(135deg, #ffa500 0%, #ff6347 100%); padding: 12px; border-radius: 12px; text-align: center; color: white; font-weight: 800; font-size: 0.95em; box-shadow: 0 4px 12px rgba(255, 165, 0, 0.3);">
                 GPS: {sig['mtf']['quality']}
             </div>
             """, unsafe_allow_html=True)
@@ -1056,7 +1096,22 @@ def display_signal(sig: Dict):
         
         with col_left:
             st.markdown(f"### 📊 RSI(7) - **{sig['rsi']['score']}/3** pts")
-            st.metric("Valeur RSI", f"{sig['rsi']['value']:.1f}")
+            
+            # Jauge RSI avec couleur douce
+            rsi_val = sig['rsi']['value']
+            if rsi_val < 30:
+                rsi_color = "#ff6b9d"  # Rose doux
+            elif rsi_val > 70:
+                rsi_color = "#ffa07a"  # Orange doux
+            else:
+                rsi_color = "#87ceeb"  # Bleu ciel doux
+            
+            st.markdown(f"""
+            <div style="background: {rsi_color}; padding: 10px; border-radius: 10px; text-align: center; color: white; font-weight: 700; margin-bottom: 10px;">
+                RSI: {rsi_val:.1f}
+            </div>
+            """, unsafe_allow_html=True)
+            
             if sig['rsi']['score'] >= 2:
                 st.success(sig['rsi']['details'])
             elif sig['rsi']['score'] == 1:
@@ -1069,13 +1124,13 @@ def display_signal(sig: Dict):
             st.markdown(f"### 📈 HMA(20) - **{sig['hma']['score']}/2** pts")
             if sig['hma']['color'] == 'VERT':
                 st.markdown("""
-                <div style="background: linear-gradient(135deg, #00ff88 0%, #00cc99 100%); padding: 15px; border-radius: 12px; color: white; font-weight: 800; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                <div style="background: linear-gradient(135deg, #98fb98 0%, #90ee90 100%); padding: 15px; border-radius: 12px; color: white; font-weight: 800; text-align: center; box-shadow: 0 4px 12px rgba(152, 251, 152, 0.3);">
                     🟢 VERT
                 </div>
                 """, unsafe_allow_html=True)
             else:
                 st.markdown("""
-                <div style="background: linear-gradient(135deg, #ff0080 0%, #ff4500 100%); padding: 15px; border-radius: 12px; color: white; font-weight: 800; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                <div style="background: linear-gradient(135deg, #ffb6c1 0%, #ffb3d9 100%); padding: 15px; border-radius: 12px; color: white; font-weight: 800; text-align: center; box-shadow: 0 4px 12px rgba(255, 182, 193, 0.3);">
                     🔴 ROUGE
                 </div>
                 """, unsafe_allow_html=True)
@@ -1125,21 +1180,25 @@ def display_signal(sig: Dict):
             
             with col:
                 if tf_data['trend'] == 'Bullish':
-                    gradient = "linear-gradient(135deg, #00ff88 0%, #00cc99 100%)"
+                    gradient = "linear-gradient(135deg, #98fb98 0%, #90ee90 100%)"
                     emoji = "🟢"
+                    shadow = "rgba(152, 251, 152, 0.3)"
                 elif tf_data['trend'] == 'Bearish':
-                    gradient = "linear-gradient(135deg, #ff0080 0%, #ff4500 100%)"
+                    gradient = "linear-gradient(135deg, #ffb6c1 0%, #ffb3d9 100%)"
                     emoji = "🔴"
+                    shadow = "rgba(255, 182, 193, 0.3)"
                 elif tf_data['trend'] == 'Retracement':
-                    gradient = "linear-gradient(135deg, #ffaa00 0%, #ff6600 100%)"
+                    gradient = "linear-gradient(135deg, #ffd700 0%, #ffb347 100%)"
                     emoji = "🟠"
+                    shadow = "rgba(255, 215, 0, 0.3)"
                 else:
-                    gradient = "linear-gradient(135deg, #666666 0%, #999999 100%)"
+                    gradient = "linear-gradient(135deg, #d3d3d3 0%, #c0c0c0 100%)"
                     emoji = "⚪"
+                    shadow = "rgba(211, 211, 211, 0.3)"
                 
                 st.markdown(f"""
-                <div style="background: {gradient}; padding: 15px; border-radius: 12px; color: white; text-align: center; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                    <h3 style="margin: 0; color: white; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">{emoji} {tf}</h3>
+                <div style="background: {gradient}; padding: 15px; border-radius: 12px; color: white; text-align: center; margin-bottom: 10px; box-shadow: 0 4px 12px {shadow};">
+                    <h3 style="margin: 0; color: white; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">{emoji} {tf}</h3>
                     <p style="margin: 5px 0 0 0; font-weight: 700; font-size: 1.1em;">{tf_data['trend']}</p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -1154,9 +1213,9 @@ def display_signal(sig: Dict):
 
 st.title("⚡ Bluestar M15 Sniper Pro")
 st.markdown("""
-<div style="background: linear-gradient(135deg, #5b6ff5 0%, #6b3fa0 100%); padding: 20px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.3);">
-    <h3 style="margin: 0; color: white; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">🎯 Scanner GPS + Currency Strength</h3>
-    <p style="margin: 5px 0 0 0; font-weight: 600; font-size: 1.1em;">{} actifs • Score max: 10/10</p>
+<div style="background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%); padding: 20px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px; box-shadow: 0 0 30px rgba(255, 8, 68, 0.4), 0 6px 20px rgba(0,0,0,0.3);">
+    <h3 style="margin: 0; color: white; font-weight: 800; text-shadow: 0 0 15px rgba(255, 255, 255, 0.7);">🎯 Scanner GPS + Currency Strength</h3>
+    <p style="margin: 5px 0 0 0; font-weight: 600; font-size: 1.1em; text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);">{} actifs • Score max: 10/10</p>
 </div>
 """.format(len(ASSETS)), unsafe_allow_html=True)
 
@@ -1201,8 +1260,8 @@ if scan_button:
     
     if not results:
         st.markdown("""
-        <div style="background: linear-gradient(135deg, #666666 0%, #999999 100%); padding: 25px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.3);">
-            <h3 style="margin: 0; color: white; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">😴 Aucun signal ≥ {}/10 points</h3>
+        <div style="background: linear-gradient(135deg, #d3d3d3 0%, #c0c0c0 100%); padding: 25px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.2);">
+            <h3 style="margin: 0; color: white; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">😴 Aucun signal ≥ {}/10 points</h3>
             <p style="margin: 10px 0 0 0; font-weight: 600; font-size: 1.1em;">💡 Essaie de baisser le score minimum</p>
         </div>
         """.format(min_score), unsafe_allow_html=True)
@@ -1211,8 +1270,8 @@ if scan_button:
         results_sorted = sorted(results, key=lambda x: (x['total_score'], x['mtf']['quality'], x['currency_strength']['score']), reverse=True)
         
         st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #00ff88 0%, #00cc99 100%); padding: 25px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px; box-shadow: 0 6px 20px rgba(0,0,0,0.3);">
-            <h3 style="margin: 0; color: white; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">🎯 {len(results)} signal(aux) détecté(s) !</h3>
+        <div style="background: linear-gradient(135deg, #98fb98 0%, #90ee90 100%); padding: 25px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px; box-shadow: 0 0 30px rgba(152, 251, 152, 0.5), 0 6px 20px rgba(0,0,0,0.2);">
+            <h3 style="margin: 0; color: white; font-weight: 800; text-shadow: 0 0 15px rgba(255, 255, 255, 0.7);">🎯 {len(results)} signal(aux) détecté(s) !</h3>
         </div>
         """, unsafe_allow_html=True)
         
