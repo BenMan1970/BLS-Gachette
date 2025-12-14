@@ -16,214 +16,139 @@ st.set_page_config(page_title="Bluestar M15 Sniper Pro", layout="centered", page
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
-# CSS MODERNE avec COULEURS VIBRANTES
+# ==========================================
+# CSS MODERNE "FINTECH PRO"
+# ==========================================
 st.markdown("""
 <style>
-    /* Import Google Font */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+    /* Import Google Font - Roboto pour un look très clean/tech */
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
     
     * {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Roboto', sans-serif;
     }
     
-    /* Background gradient */
+    /* FOND GLOBAL - Dark Navy Professionnel */
     .stApp {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        background-color: #0f1117;
+        background-image: radial-gradient(at 50% 0%, #1f2937 0%, #0f1117 70%);
     }
     
-    /* Main container */
+    /* CONTAINER PRINCIPAL */
     .main .block-container {
+        max-width: 900px;
         padding-top: 2rem;
-        padding-bottom: 2rem;
-        background: #ffffff;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    /* TITRES */
+    h1 {
+        background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 900;
+        font-size: 3em;
+        text-align: center;
+        margin-bottom: 0.2em;
     }
     
-    /* Buttons */
+    h2, h3 {
+        color: #e2e8f0;
+        font-weight: 700;
+    }
+
+    /* BOUTONS - Style moderne et tactile */
     .stButton>button {
         width: 100%;
-        border-radius: 15px;
+        border-radius: 12px;
         height: 3.5em;
         font-weight: 700;
         font-size: 1.1em;
-        border: none;
-        background: #dc143c;
+        border: 1px solid rgba(255,255,255,0.1);
+        background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
         color: white;
-        box-shadow: 0 6px 20px rgba(220, 20, 60, 0.5);
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
     }
     
     .stButton>button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 30px rgba(220, 20, 60, 0.7);
-        background: #c41230;
+        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
+        background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
     }
     
-    /* Signal cards */
-    .signal-card {
-        padding: 20px;
-        border-radius: 15px;
-        margin-bottom: 15px;
-        animation: slideIn 0.4s ease-out;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-        background: #ffffff;
-        border: 2px solid #e0e0e0;
-    }
-    
-    @keyframes slideIn {
-        from { 
-            opacity: 0; 
-            transform: translateX(-20px);
-        }
-        to { 
-            opacity: 1; 
-            transform: translateX(0);
-        }
-    }
-    
-    /* Badges */
-    .score-badge {
-        display: inline-block;
-        padding: 8px 20px;
-        border-radius: 25px;
-        font-size: 1.1em;
-        font-weight: 700;
-        margin: 5px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-    }
-    
-    /* Premium badge */
-    .badge-premium {
-        background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%);
-        color: white;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    }
-    
-    /* Excellent badge */
-    .badge-excellent {
-        background: linear-gradient(135deg, #00d4ff 0%, #0099ff 100%);
-        color: white;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    }
-    
-    /* Fort badge */
-    .badge-fort {
-        background: linear-gradient(135deg, #00ff88 0%, #00cc99 100%);
-        color: white;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    }
-    
-    /* Bon badge */
-    .badge-bon {
-        background: linear-gradient(135deg, #ffaa00 0%, #ff6600 100%);
-        color: white;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    }
-    
-    /* Metrics - couleurs douces */
-    div[data-testid="stMetricValue"] {
-        font-size: 1.8em;
-        font-weight: 800;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    
-    div[data-testid="stMetricLabel"] {
-        font-weight: 600;
-        color: #555;
-    }
-    
-    /* Expander - Actifs en GROS et GRAS */
+    /* EXPANDER - LE COEUR DU DESIGN */
     .streamlit-expanderHeader {
-        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        color: white !important;
-        border-radius: 12px;
-        font-weight: 900;
-        font-size: 1.4em;
-        padding: 20px;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-        border: 2px solid #00ff88;
-        transition: all 0.3s ease;
+        background-color: #1e293b !important;
+        border: 1px solid #334155;
+        border-radius: 10px;
+        color: #f8fafc !important;
+        padding: 1.5rem;
+        transition: all 0.3s;
     }
     
     .streamlit-expanderHeader:hover {
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-        transform: translateY(-2px);
+        border-color: #64748b;
+        background-color: #263345 !important;
+    }
+
+    /* CONTENU DE L'EXPANDER */
+    .streamlit-expanderContent {
+        background-color: #161b22;
+        border: 1px solid #334155;
+        border-top: none;
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+        padding: 20px;
     }
     
-    /* Style pour le nom de l'actif en TRÈS GROS */
-    .streamlit-expanderHeader strong {
-        font-size: 1.6em !important;
-        font-weight: 900 !important;
-        letter-spacing: 2px;
+    /* TYPOGRAPHIE EXPANDER HEADER (Actif en très gros) */
+    .streamlit-expanderHeader p {
+        font-size: 1.4rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.5px;
     }
-    
-    /* Success/Error boxes */
-    .element-container div[data-baseweb="notification"] {
-        border-radius: 12px;
-        border: none;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-        font-weight: 600;
-    }
-    
-    /* Divider */
-    hr {
-        border: none;
-        height: 3px;
-        background: linear-gradient(90deg, transparent, #5b6ff5, transparent);
-        margin: 20px 0;
-    }
-    
-    /* Title styling */
-    h1 {
-        background: linear-gradient(135deg, #dc143c 0%, #b01030 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 800;
-        text-align: center;
-        font-size: 2.5em;
-        margin-bottom: 0.5rem;
-        filter: drop-shadow(0 2px 4px rgba(220, 20, 60, 0.3));
-    }
-    
-    h2, h3 {
-        color: #2c3e50;
+
+    /* METRICS CUSTOM */
+    div[data-testid="stMetricValue"] {
+        font-size: 1.6rem;
+        color: #f1f5f9;
         font-weight: 700;
     }
-    
-    /* Progress bar */
-    .stProgress > div > div > div {
-        background: #dc143c;
+    div[data-testid="stMetricLabel"] {
+        color: #94a3b8;
+        font-size: 0.9rem;
     }
-    
-    /* Slider */
-    .stSlider > div > div > div {
-        background: #dc143c;
+
+    /* CARTES D'INFO (Box HTML) */
+    .info-box {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
     }
-    
-    /* Info boxes with gradient borders */
+
+    /* ALERTS/WARNINGS */
     .stAlert {
-        border-radius: 12px;
-        border-left: 5px solid;
-        border-image: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%) 1;
-        font-weight: 500;
-        background: rgba(255, 255, 255, 0.95);
+        background-color: #1e293b;
+        color: #e2e8f0;
+        border: 1px solid #334155;
+    }
+
+    /* DIVIDER */
+    hr {
+        margin: 1.5em 0;
+        border-color: #334155;
     }
     
-    /* Caption text */
-    .caption, [data-testid="stCaptionContainer"] {
-        color: #555 !important;
-        font-weight: 500;
+    /* SCROLLBAR */
+    ::-webkit-scrollbar {
+        width: 10px;
+        background: #0f1117;
     }
-    
-    /* Better text contrast */
-    p, span, div {
-        color: #2c3e50;
+    ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 5px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -841,10 +766,10 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
     status_text = st.empty()
     total = len(ASSETS)
     
-    status_text.text("🌍 Calcul de la force des devises...")
+    status_text.markdown("🔄 **Synchronisation des devises...**")
     try:
         calculate_currency_strength(api)
-        status_text.text("✅ Currency Strength calculé")
+        status_text.text("✅ Currency Strength OK")
     except:
         status_text.text("⚠️ Erreur Currency Strength")
     
@@ -852,7 +777,7 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
     
     for i, symbol in enumerate(ASSETS):
         progress_bar.progress((i + 1) / total)
-        status_text.text(f"🔍 {symbol}... ({i+1}/{total})")
+        status_text.markdown(f"🔍 Scan: **{symbol}** ... ({i+1}/{total})")
         
         try:
             df_m15 = api.get_candles(symbol, "M15", count=150)
@@ -883,26 +808,26 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
                 
                 if total_score >= min_score:
                     if total_score >= 9 and mtf_buy['quality'] in ['A+', 'A'] and cs_buy['score'] == 2:
-                        quality = "🔥 PREMIUM"
-                        quality_color = "#ff0080"
+                        quality = "PREMIUM"
+                        quality_color = "#3b82f6"  # Blue neon
                     elif total_score >= 8 and mtf_buy['quality'] in ['A+', 'A']:
-                        quality = "💎 EXCELLENT"
-                        quality_color = "#00d4ff"
+                        quality = "EXCELLENT"
+                        quality_color = "#10b981"  # Emerald
                     elif total_score >= 6:
-                        quality = "⭐ FORT"
-                        quality_color = "#00ff88"
+                        quality = "FORT"
+                        quality_color = "#34d399"  # Green
                     elif total_score >= 5:
-                        quality = "✓ BON"
-                        quality_color = "#ffaa00"
+                        quality = "BON"
+                        quality_color = "#fbbf24"  # Amber
                     else:
-                        quality = "⚠️ MOYEN"
-                        quality_color = "#666666"
+                        quality = "MOYEN"
+                        quality_color = "#94a3b8"  # Slate
                     
                     warning = ""
                     if cs_buy['score'] == 0 and symbol in FOREX_PAIRS:
-                        if quality in ["🔥 PREMIUM", "💎 EXCELLENT"]:
-                            quality = "⭐ FORT"
-                            quality_color = "#00ff88"
+                        if quality in ["PREMIUM", "EXCELLENT"]:
+                            quality = "FORT"
+                            quality_color = "#34d399"
                         warning = "⚠️ Divergence devise"
                     
                     signals.append({
@@ -932,26 +857,26 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
                 
                 if total_score >= min_score:
                     if total_score >= 9 and mtf_sell['quality'] in ['A+', 'A'] and cs_sell['score'] == 2:
-                        quality = "🔥 PREMIUM"
-                        quality_color = "#f093fb"
+                        quality = "PREMIUM"
+                        quality_color = "#a855f7"  # Purple
                     elif total_score >= 8 and mtf_sell['quality'] in ['A+', 'A']:
-                        quality = "💎 EXCELLENT"
-                        quality_color = "#4facfe"
+                        quality = "EXCELLENT"
+                        quality_color = "#ec4899"  # Pink
                     elif total_score >= 6:
-                        quality = "⭐ FORT"
-                        quality_color = "#43e97b"
+                        quality = "FORT"
+                        quality_color = "#f472b6"  # Light pink
                     elif total_score >= 5:
-                        quality = "✓ BON"
-                        quality_color = "#fa709a"
+                        quality = "BON"
+                        quality_color = "#fb7185"  # Rose
                     else:
-                        quality = "⚠️ MOYEN"
-                        quality_color = "#a8a8a8"
+                        quality = "MOYEN"
+                        quality_color = "#94a3b8"
                     
                     warning = ""
                     if cs_sell['score'] == 0 and symbol in FOREX_PAIRS:
-                        if quality in ["🔥 PREMIUM", "💎 EXCELLENT"]:
-                            quality = "⭐ FORT"
-                            quality_color = "#43e97b"
+                        if quality in ["PREMIUM", "EXCELLENT"]:
+                            quality = "FORT"
+                            quality_color = "#f472b6"
                         warning = "⚠️ Divergence devise"
                     
                     signals.append({
@@ -978,280 +903,224 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
     status_text.empty()
     
     if skipped > 0:
-        st.caption(f"ℹ️ {skipped} actif(s) ignoré(s)")
+        st.caption(f"ℹ️ {skipped} actifs ignorés")
     
     return signals
 
 # ==========================================
-# AFFICHAGE DES SIGNAUX - DESIGN VIBRANT
+# AFFICHAGE DES SIGNAUX - DESIGN UI/UX PRO
 # ==========================================
 
 def display_signal(sig: Dict):
-    """Affiche un signal avec design moderne et coloré"""
-    if sig['type'] == 'BUY':
-        icon = "🚀"
-        emoji_direction = "📈"
-        card_gradient = "linear-gradient(135deg, #00ff88 0%, #00d4ff 100%)"
-        border_color = "#00ff88"
-    else:
-        icon = "📉"
-        emoji_direction = "📉"
-        card_gradient = "linear-gradient(135deg, #ff0080 0%, #ff4500 100%)"
-        border_color = "#ff0080"
+    """Affiche un signal avec design professionnel Dashboard"""
     
+    is_buy = sig['type'] == 'BUY'
+    
+    # Couleurs et icônes
+    if is_buy:
+        color_theme = "#10b981"  # Emerald Green
+        bg_gradient = "linear-gradient(90deg, #064e3b 0%, #065f46 100%)"
+        arrow = "🟢 BUY"
+        border = "2px solid #059669"
+    else:
+        color_theme = "#ef4444"  # Red
+        bg_gradient = "linear-gradient(90deg, #7f1d1d 0%, #991b1b 100%)"
+        arrow = "🔴 SELL"
+        border = "2px solid #dc2626"
+
+    # Calcul temps
     signal_utc = sig['timestamp_utc']
-    time_utc_str = signal_utc.strftime("%H:%M:%S")
-    date_str = signal_utc.strftime("%Y-%m-%d")
+    time_str = signal_utc.strftime("%H:%M")
+    elapsed_sec = int((datetime.now(timezone.utc) - signal_utc).total_seconds())
     
-    now_utc = datetime.now(timezone.utc)
-    elapsed = now_utc - signal_utc
-    elapsed_seconds = int(elapsed.total_seconds())
+    fresh_txt = f"{elapsed_sec//60} min ago" if elapsed_sec >= 60 else f"{elapsed_sec} sec ago"
     
-    if elapsed_seconds > 1800:
-        freshness = f"Bougie du {date_str} à {time_utc_str} UTC"
-        freshness_emoji = "⚪"
-        freshness_label = "(Marché fermé)"
-    elif elapsed_seconds < 60:
-        freshness = f"il y a {elapsed_seconds}s"
-        freshness_emoji = "🟢"
-        freshness_label = ""
-    elif elapsed_seconds < 300:
-        freshness = f"il y a {elapsed_seconds // 60}min"
-        freshness_emoji = "🟢"
-        freshness_label = ""
-    elif elapsed_seconds < 900:
-        freshness = f"il y a {elapsed_seconds // 60}min"
-        freshness_emoji = "🟡"
-        freshness_label = ""
-    else:
-        freshness = f"il y a {elapsed_seconds // 60}min"
-        freshness_emoji = "🔴"
-        freshness_label = "(Signal ancien)"
+    # Header Formaté pour Expander (Gros Texte)
+    header_title = f"{sig['symbol']}  |  {arrow}  |  Score {sig['total_score']}/10  [{sig['quality']}]"
     
-    expander_title = f"{icon} **{sig['symbol']}** {emoji_direction} {sig['type']} • Score: **{sig['total_score']}/10** • {sig['quality']}"
-    
-    with st.expander(expander_title, expanded=True):
-        # Header simple sans néon
+    with st.expander(header_title, expanded=True):
+        
+        # En-tête Interne
         st.markdown(f"""
-        <div style="background: {card_gradient}; padding: 15px; border-radius: 12px; color: white; margin-bottom: 15px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);">
-            <h3 style="margin: 0; color: white;">🕐 {date_str} à {time_utc_str} UTC</h3>
-            <p style="margin: 5px 0 0 0; font-size: 1.1em;">{freshness_emoji} {freshness} {freshness_label}</p>
+        <div style="background: {bg_gradient}; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: {border}; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <span style="font-size: 1.8em; font-weight: 900; color: white;">{sig['symbol']}</span>
+                <span style="background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-left: 10px; color: white;">{sig['type']}</span>
+            </div>
+            <div style="text-align: right;">
+                <div style="color: rgba(255,255,255,0.8); font-size: 0.9em;">{fresh_txt}</div>
+                <div style="font-size: 1.4em; font-weight: bold; color: white;">{sig['price']:.5f}</div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
-        
-        # Metrics row
-        col1, col2, col3, col4, col5 = st.columns([1.5, 1, 1, 1, 1.5])
-        
-        with col1:
-            st.metric("💰 Prix", f"{sig['price']:.5f}")
-        with col2:
-            st.metric("📊 Score", f"{sig['total_score']}/10")
-        with col3:
-            st.markdown(f"""
-            <div style="background: {sig['quality_color']}; padding: 12px; border-radius: 12px; text-align: center; color: white; font-weight: 800; font-size: 0.95em; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
-                {sig['quality']}
-            </div>
-            """, unsafe_allow_html=True)
-        with col4:
-            st.markdown(f"""
-            <div style="background: linear-gradient(135deg, #ffa500 0%, #ff6347 100%); padding: 12px; border-radius: 12px; text-align: center; color: white; font-weight: 800; font-size: 0.95em; box-shadow: 0 4px 12px rgba(255, 165, 0, 0.3);">
-                GPS: {sig['mtf']['quality']}
-            </div>
-            """, unsafe_allow_html=True)
-        with col5:
-            atr_display = f"{sig['atr_m15']:.5f}" if sig['atr_m15'] < 1 else f"{sig['atr_m15']:.2f}"
-            st.metric("⚡ ATR M15", atr_display)
-        
+
         if sig.get('warning'):
             st.warning(f"⚠️ {sig['warning']}")
-        
+
+        # Métriques principales
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Score Total", f"{sig['total_score']}/10")
+        c2.metric("Qualité GPS", sig['mtf']['quality'])
+        c3.metric("Force Devise", f"{sig['currency_strength']['score']}/2")
+        atr_fmt = f"{sig['atr_m15']:.4f}" if sig['atr_m15'] < 1 else f"{sig['atr_m15']:.2f}"
+        c4.metric("ATR M15", atr_fmt)
+
         st.divider()
-        
-        # Indicateurs
+
+        # Section Indicateurs Techniques
         col_left, col_right = st.columns(2)
         
         with col_left:
-            st.markdown(f"### 📊 RSI(7) - **{sig['rsi']['score']}/3** pts")
+            st.markdown("##### 🛠️ Technique")
             
-            # Jauge RSI avec couleur douce
+            # RSI Box
             rsi_val = sig['rsi']['value']
-            if rsi_val < 30:
-                rsi_color = "#ff6b9d"  # Rose doux
-            elif rsi_val > 70:
-                rsi_color = "#ffa07a"  # Orange doux
-            else:
-                rsi_color = "#87ceeb"  # Bleu ciel doux
-            
+            rsi_col = "#10b981" if (is_buy and rsi_val > 50) or (not is_buy and rsi_val < 50) else "#94a3b8"
             st.markdown(f"""
-            <div style="background: {rsi_color}; padding: 10px; border-radius: 10px; text-align: center; color: white; font-weight: 700; margin-bottom: 10px;">
-                RSI: {rsi_val:.1f}
+            <div class="info-box">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #94a3b8;">RSI (7)</span>
+                    <span style="font-weight: bold; color: {rsi_col};">{rsi_val:.1f}</span>
+                </div>
+                <div style="font-size: 0.85em; margin-top: 5px;">{sig['rsi']['details']}</div>
             </div>
             """, unsafe_allow_html=True)
             
-            if sig['rsi']['score'] >= 2:
-                st.success(sig['rsi']['details'])
-            elif sig['rsi']['score'] == 1:
-                st.info(sig['rsi']['details'])
-            else:
-                st.caption(sig['rsi']['details'])
-            
-            st.write("")
-            
-            st.markdown(f"### 📈 HMA(20) - **{sig['hma']['score']}/2** pts")
-            if sig['hma']['color'] == 'VERT':
-                st.markdown("""
-                <div style="background: linear-gradient(135deg, #98fb98 0%, #90ee90 100%); padding: 15px; border-radius: 12px; color: white; font-weight: 800; text-align: center; box-shadow: 0 4px 12px rgba(152, 251, 152, 0.3);">
-                    🟢 VERT
+            # HMA Box
+            hma_col = "#10b981" if sig['hma']['color'] == 'VERT' else "#ef4444"
+            st.markdown(f"""
+            <div class="info-box">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #94a3b8;">HMA Trend</span>
+                    <span style="font-weight: bold; color: {hma_col};">{sig['hma']['color']}</span>
                 </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown("""
-                <div style="background: linear-gradient(135deg, #ffb6c1 0%, #ffb3d9 100%); padding: 15px; border-radius: 12px; color: white; font-weight: 800; text-align: center; box-shadow: 0 4px 12px rgba(255, 182, 193, 0.3);">
-                    🔴 ROUGE
-                </div>
-                """, unsafe_allow_html=True)
-            
-            st.write("")
-            if sig['hma']['score'] >= 1:
-                st.success(sig['hma']['details'])
-            else:
-                st.caption(sig['hma']['details'])
-        
+                <div style="font-size: 0.85em; margin-top: 5px;">{sig['hma']['details']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
         with col_right:
-            st.markdown(f"### 🌍 MTF GPS - **{sig['mtf']['score']}/3** pts")
-            st.metric("Qualité GPS", sig['mtf']['quality'])
-            st.metric("Alignement", sig['mtf']['alignment'])
+            st.markdown("##### 🌍 Macro & Force")
             
-            if sig['mtf']['score'] >= 2:
-                st.success(sig['mtf']['details'])
-            elif sig['mtf']['score'] == 1:
-                st.info(sig['mtf']['details'])
+            # MTF GPS Box
+            st.markdown(f"""
+            <div class="info-box">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #94a3b8;">Alignement MTF</span>
+                    <span style="font-weight: bold; color: white;">{sig['mtf']['alignment']}</span>
+                </div>
+                <div style="font-size: 0.85em; margin-top: 5px; color: #cbd5e1;">{sig['mtf']['details']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Currency Strength Box
+            base_score = sig['currency_strength']['base_score']
+            quote_score = sig['currency_strength']['quote_score']
+            st.markdown(f"""
+            <div class="info-box">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #94a3b8;">Currency Strength</span>
+                    <span style="font-weight: bold; color: white;">{base_score:.1f}% vs {quote_score:.1f}%</span>
+                </div>
+                <div style="font-size: 0.85em; margin-top: 5px;">{sig['currency_strength']['rank_info']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        # Tableau Multi-Timeframe (Clean)
+        st.markdown("##### 📅 Analyse Multi-Timeframe")
+        
+        mtf_cols = st.columns(3)
+        tfs = ['D1', 'H4', 'H1']
+        
+        for i, tf in enumerate(tfs):
+            data = sig['mtf']['analysis'][tf]
+            trend = data['trend']
+            
+            # Couleur badge trend
+            if trend == 'Bullish':
+                badge_bg = "rgba(16, 185, 129, 0.2)"
+                badge_col = "#34d399"
+                icon = "↗️"
+            elif trend == 'Bearish':
+                badge_bg = "rgba(239, 68, 68, 0.2)"
+                badge_col = "#f87171"
+                icon = "↘️"
             else:
-                st.caption(sig['mtf']['details'])
-            
-            st.write("")
-            
-            st.markdown(f"### 💪 Currency Strength - **{sig['currency_strength']['score']}/2** pts")
-            if sig['currency_strength']['score'] == 2:
-                st.success(sig['currency_strength']['details'])
-            elif sig['currency_strength']['score'] == 1:
-                st.info(sig['currency_strength']['details'])
-            else:
-                st.warning(sig['currency_strength']['details'])
-            
-            st.caption(f"📊 {sig['currency_strength']['base_score']:.2f}% vs {sig['currency_strength']['quote_score']:.2f}% | {sig['currency_strength']['rank_info']}")
-        
-        st.divider()
-        
-        # MTF Analysis
-        st.markdown("### 📅 Analyse Multi-Timeframe")
-        
-        col_d1, col_h4, col_h1 = st.columns(3)
-        
-        timeframes = ['D1', 'H4', 'H1']
-        columns = [col_d1, col_h4, col_h1]
-        
-        for tf, col in zip(timeframes, columns):
-            tf_data = sig['mtf']['analysis'][tf]
-            
-            with col:
-                if tf_data['trend'] == 'Bullish':
-                    gradient = "linear-gradient(135deg, #98fb98 0%, #90ee90 100%)"
-                    emoji = "🟢"
-                    shadow = "rgba(152, 251, 152, 0.3)"
-                elif tf_data['trend'] == 'Bearish':
-                    gradient = "linear-gradient(135deg, #ffb6c1 0%, #ffb3d9 100%)"
-                    emoji = "🔴"
-                    shadow = "rgba(255, 182, 193, 0.3)"
-                elif tf_data['trend'] == 'Retracement':
-                    gradient = "linear-gradient(135deg, #ffd700 0%, #ffb347 100%)"
-                    emoji = "🟠"
-                    shadow = "rgba(255, 215, 0, 0.3)"
-                else:
-                    gradient = "linear-gradient(135deg, #d3d3d3 0%, #c0c0c0 100%)"
-                    emoji = "⚪"
-                    shadow = "rgba(211, 211, 211, 0.3)"
-                
+                badge_bg = "rgba(148, 163, 184, 0.2)"
+                badge_col = "#cbd5e1"
+                icon = "➡️"
+
+            with mtf_cols[i]:
                 st.markdown(f"""
-                <div style="background: {gradient}; padding: 15px; border-radius: 12px; color: white; text-align: center; margin-bottom: 10px; box-shadow: 0 4px 12px {shadow};">
-                    <h3 style="margin: 0; color: white; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">{emoji} {tf}</h3>
-                    <p style="margin: 5px 0 0 0; font-weight: 700; font-size: 1.1em;">{tf_data['trend']}</p>
+                <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px; text-align: center;">
+                    <div style="color: #94a3b8; font-size: 0.8em; font-weight: bold; margin-bottom: 5px;">{tf}</div>
+                    <div style="background: {badge_bg}; color: {badge_col}; padding: 4px; border-radius: 4px; font-weight: bold; font-size: 0.9em;">
+                        {icon} {trend}
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
-                
-                atr_display = f"{tf_data['atr']:.5f}" if tf_data['atr'] < 1 else f"{tf_data['atr']:.2f}"
-                st.caption(f"ATR: {atr_display}")
-                st.caption(f"{tf_data['details']}")
 
 # ==========================================
 # INTERFACE PRINCIPALE
 # ==========================================
 
-st.title("⚡ Bluestar M15 Sniper Pro")
-st.markdown("""
-<div style="background: #dc143c; padding: 20px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px; box-shadow: 0 6px 20px rgba(220, 20, 60, 0.4);">
-    <h3 style="margin: 0; color: white; font-weight: 800;">🎯 Scanner GPS + Currency Strength</h3>
-    <p style="margin: 5px 0 0 0; font-weight: 600; font-size: 1.1em;">{} actifs • Score max: 10/10</p>
+st.title("Bluestar M15 Pro")
+st.markdown(f"""
+<div style="text-align: center; color: #94a3b8; margin-bottom: 30px; font-family: 'Roboto', sans-serif;">
+    Scanner Algorithmique <span style="color: #3b82f6;">MTF GPS</span> & <span style="color: #8b5cf6;">Currency Strength</span>
+    <br><span style="font-size: 0.8em;">Surveillance de {len(ASSETS)} actifs en temps réel</span>
 </div>
-""".format(len(ASSETS)), unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
-# Controls
-col1, col2, col3 = st.columns([2, 2, 1])
-with col1:
-    min_score = st.slider("Score minimum", 3, 10, 5, help="Score total sur 10 (RSI:3 + HMA:2 + MTF:3 + CS:2)")
-with col2:
-    scan_button = st.button("🎯 LANCER LE SCAN", type="primary", use_container_width=True)
-with col3:
-    if st.button("🗑️", use_container_width=True):
-        st.session_state.cache = {}
-        st.session_state.cache_time = {}
-        st.session_state.currency_strength_cache = None
-        st.session_state.currency_strength_time = 0
-        st.success("✓")
+# Barre de contrôle Style "Glass"
+with st.container():
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        min_score = st.slider("Sensibilité du signal (Score Min)", 3, 10, 5, 
+                            help="Plus le score est élevé, plus le signal est filtré.")
+    with col2:
+        st.write("") # Spacer
+        st.write("") # Spacer
+        clear_cache = st.button("🧹 Reset", help="Vider le cache")
 
-if scan_button:
+scan_btn = st.button("🚀 LANCER LE SCANNER", type="primary")
+
+if clear_cache:
+    st.session_state.cache = {}
+    st.session_state.cache_time = {}
+    st.session_state.currency_strength_cache = None
+    st.session_state.currency_strength_time = 0
+    st.toast("Cache vidé avec succès !", icon="🧹")
+
+if scan_btn:
     api = OandaClient()
-    
     start_time = time.time()
     
-    with st.spinner("🔎 Analyse GPS + Currency Strength en cours..."):
+    with st.spinner("Analyse des marchés en cours..."):
         results = run_sniper_scan(api, min_score=min_score)
     
-    scan_duration = time.time() - start_time
+    duration = time.time() - start_time
     
-    st.divider()
+    st.markdown("---")
     
-    # Metrics
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Signaux", len(results))
-    with col2:
-        st.metric("Score min", f"{min_score}/10")
-    with col3:
-        st.metric("Scan", f"{scan_duration:.1f}s")
-    with col4:
-        st.metric("Requêtes", api.request_count)
+    # Dashboard Metrics Result
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Signaux Trouvés", len(results))
+    m2.metric("Temps de Scan", f"{duration:.1f}s")
+    m3.metric("Requêtes API", api.request_count)
     
-    st.divider()
+    st.markdown("---")
     
     if not results:
-        st.markdown("""
-        <div style="background: linear-gradient(135deg, #d3d3d3 0%, #c0c0c0 100%); padding: 25px; border-radius: 12px; color: white; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,0.2);">
-            <h3 style="margin: 0; color: white; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">😴 Aucun signal ≥ {}/10 points</h3>
-            <p style="margin: 10px 0 0 0; font-weight: 600; font-size: 1.1em;">💡 Essaie de baisser le score minimum</p>
-        </div>
-        """.format(min_score), unsafe_allow_html=True)
-    
+        st.info(f"Aucun signal détecté avec un score >= {min_score}. Essayez de réduire le score minimum.")
     else:
+        # Tri intelligent : Score > Qualité MTF > Currency Strength
         results_sorted = sorted(results, key=lambda x: (x['total_score'], x['mtf']['quality'], x['currency_strength']['score']), reverse=True)
-        
-        st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #98fb98 0%, #90ee90 100%); padding: 25px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px; box-shadow: 0 6px 20px rgba(152, 251, 152, 0.4);">
-            <h3 style="margin: 0; color: white; font-weight: 800;">🎯 {len(results)} signal(aux) détecté(s) !</h3>
-        </div>
-        """, unsafe_allow_html=True)
         
         for sig in results_sorted:
             display_signal(sig)
-    
-    st.caption(f"⏰ {datetime.now().strftime('%H:%M:%S')} | Score: RSI(3) + HMA(2) + MTF GPS(3) + CS(2) | 🔥 PREMIUM = 9-10/10")
+            
+    st.markdown("""
+    <div style="text-align: center; margin-top: 50px; opacity: 0.5; font-size: 0.8em;">
+        Bluestar M15 Sniper Pro • Trading involves risk
+    </div>
+    """, unsafe_allow_html=True)
