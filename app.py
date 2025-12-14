@@ -16,36 +16,169 @@ st.set_page_config(page_title="Bluestar M15 Sniper Pro", layout="centered", page
 logging.basicConfig(level=logging.WARNING)
 logger = logging.getLogger(__name__)
 
-# CSS amélioré avec meilleure gestion du HTML
+# CSS MODERNE avec COULEURS VIBRANTES
 st.markdown("""
 <style>
+    /* Import Google Font */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+    
+    * {
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Background gradient */
+    .stApp {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    /* Main container */
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Buttons */
     .stButton>button {
         width: 100%;
-        border-radius: 10px;
-        height: 3em;
-        font-weight: bold;
+        border-radius: 15px;
+        height: 3.5em;
+        font-weight: 700;
+        font-size: 1.1em;
+        border: none;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        transition: all 0.3s ease;
     }
+    
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+    
+    /* Signal cards */
     .signal-card {
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 10px;
-        animation: fadeIn 0.3s;
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 15px;
+        animation: slideIn 0.4s ease-out;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
+    
+    @keyframes slideIn {
+        from { 
+            opacity: 0; 
+            transform: translateX(-20px);
+        }
+        to { 
+            opacity: 1; 
+            transform: translateX(0);
+        }
     }
+    
+    /* Badges */
     .score-badge {
         display: inline-block;
-        padding: 6px 16px;
-        border-radius: 20px;
-        font-size: 1em;
-        font-weight: bold;
-        margin: 2px;
+        padding: 8px 20px;
+        border-radius: 25px;
+        font-size: 1.1em;
+        font-weight: 700;
+        margin: 5px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
     }
-    /* Fix pour éviter l'affichage du code HTML brut */
-    div[data-testid="stMarkdownContainer"] pre {
-        display: none !important;
+    
+    /* Premium badge */
+    .badge-premium {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+    
+    /* Excellent badge */
+    .badge-excellent {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+    
+    /* Fort badge */
+    .badge-fort {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        color: white;
+    }
+    
+    /* Bon badge */
+    .badge-bon {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        color: white;
+    }
+    
+    /* Metrics */
+    div[data-testid="stMetricValue"] {
+        font-size: 1.8em;
+        font-weight: 800;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    /* Expander */
+    .streamlit-expanderHeader {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white !important;
+        border-radius: 12px;
+        font-weight: 700;
+        padding: 15px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    /* Success/Error boxes */
+    .element-container div[data-baseweb="notification"] {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Divider */
+    hr {
+        border: none;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #667eea, transparent);
+        margin: 20px 0;
+    }
+    
+    /* Title styling */
+    h1 {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+        text-align: center;
+        font-size: 2.5em;
+        margin-bottom: 0.5rem;
+    }
+    
+    h2, h3 {
+        color: #667eea;
+        font-weight: 700;
+    }
+    
+    /* Progress bar */
+    .stProgress > div > div > div {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    /* Slider */
+    .stSlider > div > div > div {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    /* Info boxes with gradient borders */
+    .stAlert {
+        border-radius: 12px;
+        border-left: 5px solid;
+        border-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%) 1;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -600,10 +733,7 @@ def calculate_hma_score(hma_trend: pd.Series, direction: str) -> Dict:
     }
 
 def calculate_mtf_score_gps(api: OandaClient, symbol: str, direction: str) -> Dict:
-    """
-    Score MTF GPS amélioré : 0-3 points + Qualité A+/A/B/C
-    Analyse D1, H4, H1
-    """
+    """Score MTF GPS amélioré : 0-3 points + Qualité A+/A/B/C"""
     timeframes = {'D1': 'D', 'H4': 'H4', 'H1': 'H1'}
     analysis = {}
     
@@ -614,12 +744,10 @@ def calculate_mtf_score_gps(api: OandaClient, symbol: str, direction: str) -> Di
         else:
             analysis[tf_name] = analyze_timeframe_gps(df, tf_name)
     
-    # Calcul du score MTF
     score = 0
     details = []
     expected = 'Bullish' if direction == 'BUY' else 'Bearish'
     
-    # Poids: D1=2, H4=1, H1=0.5
     weights = {'D1': 2.0, 'H4': 1.0, 'H1': 0.5}
     aligned_weight = 0
     
@@ -627,21 +755,19 @@ def calculate_mtf_score_gps(api: OandaClient, symbol: str, direction: str) -> Di
         if analysis[tf]['trend'] == expected:
             aligned_weight += weights[tf]
     
-    # Score sur 3 points basé sur l'alignement pondéré
-    total_weight = sum(weights.values())  # 3.5
+    total_weight = sum(weights.values())
     alignment_pct = (aligned_weight / total_weight) * 100
     
-    if alignment_pct >= 85:  # ~3 TF alignés
+    if alignment_pct >= 85:
         score = 3
         details.append("✅ Alignement FORT")
-    elif alignment_pct >= 57:  # ~2 TF alignés
+    elif alignment_pct >= 57:
         score = 2
         details.append("⚠️ Alignement MOYEN")
-    elif alignment_pct >= 28:  # ~1 TF aligné
+    elif alignment_pct >= 28:
         score = 1
         details.append("📊 Alignement FAIBLE")
     
-    # Déterminer la qualité GPS
     quality = 'C'
     if analysis['D1']['trend'] == analysis['H4']['trend']:
         quality = 'B'
@@ -659,18 +785,10 @@ def calculate_mtf_score_gps(api: OandaClient, symbol: str, direction: str) -> Di
     }
 
 # ==========================================
-# SCANNER AVEC SCORING GPS + CURRENCY STRENGTH
+# SCANNER
 # ==========================================
 
 def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
-    """
-    Scanner avec système de scoring GPS + Currency Strength
-    Score total : 0-10 points
-    - RSI : 0-3 points
-    - HMA : 0-2 points
-    - MTF GPS : 0-3 points
-    - Currency Strength : 0-2 points
-    """
     signals = []
     skipped = 0
     
@@ -678,7 +796,6 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
     status_text = st.empty()
     total = len(ASSETS)
     
-    # Pré-calculer Currency Strength une seule fois
     status_text.text("🌍 Calcul de la force des devises...")
     try:
         calculate_currency_strength(api)
@@ -693,13 +810,11 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
         status_text.text(f"🔍 {symbol}... ({i+1}/{total})")
         
         try:
-            # 1. Données M15
             df_m15 = api.get_candles(symbol, "M15", count=150)
             if df_m15.empty or len(df_m15) < 50:
                 skipped += 1
                 continue
 
-            # 2. Calcul des indicateurs
             rsi_series = get_rsi_ohlc4(df_m15)
             if rsi_series.empty:
                 continue
@@ -710,11 +825,9 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
             
             current_price = df_m15['close'].iloc[-1]
             atr_m15 = calculate_atr(df_m15, 14).iloc[-1]
-            
-            # IMPORTANT : Heure de la dernière bougie M15 (le vrai signal)
             signal_time_utc = df_m15['time'].iloc[-1].to_pydatetime().replace(tzinfo=timezone.utc)
             
-            # 3. Test BUY
+            # Test BUY
             rsi_buy = calculate_rsi_score(rsi_series, 'BUY')
             if rsi_buy['score'] > 0:
                 hma_buy = calculate_hma_score(hma_trend, 'BUY')
@@ -724,29 +837,27 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
                 total_score = rsi_buy['score'] + hma_buy['score'] + mtf_buy['score'] + cs_buy['score']
                 
                 if total_score >= min_score:
-                    # Déterminer la qualité
                     if total_score >= 9 and mtf_buy['quality'] in ['A+', 'A'] and cs_buy['score'] == 2:
                         quality = "🔥 PREMIUM"
-                        quality_color = "#ff6b00"
+                        quality_color = "#f093fb"
                     elif total_score >= 8 and mtf_buy['quality'] in ['A+', 'A']:
                         quality = "💎 EXCELLENT"
-                        quality_color = "#28a745"
+                        quality_color = "#4facfe"
                     elif total_score >= 6:
                         quality = "⭐ FORT"
-                        quality_color = "#ffc107"
+                        quality_color = "#43e97b"
                     elif total_score >= 5:
                         quality = "✓ BON"
-                        quality_color = "#17a2b8"
+                        quality_color = "#fa709a"
                     else:
                         quality = "⚠️ MOYEN"
-                        quality_color = "#6c757d"
+                        quality_color = "#a8a8a8"
                     
-                    # Déclassement si divergence Currency Strength
                     warning = ""
                     if cs_buy['score'] == 0 and symbol in FOREX_PAIRS:
                         if quality in ["🔥 PREMIUM", "💎 EXCELLENT"]:
                             quality = "⭐ FORT"
-                            quality_color = "#ffc107"
+                            quality_color = "#43e97b"
                         warning = "⚠️ Divergence devise"
                     
                     signals.append({
@@ -765,7 +876,7 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
                         "timestamp_utc": signal_time_utc
                     })
             
-            # 4. Test SELL
+            # Test SELL
             rsi_sell = calculate_rsi_score(rsi_series, 'SELL')
             if rsi_sell['score'] > 0:
                 hma_sell = calculate_hma_score(hma_trend, 'SELL')
@@ -777,25 +888,25 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
                 if total_score >= min_score:
                     if total_score >= 9 and mtf_sell['quality'] in ['A+', 'A'] and cs_sell['score'] == 2:
                         quality = "🔥 PREMIUM"
-                        quality_color = "#ff6b00"
+                        quality_color = "#f093fb"
                     elif total_score >= 8 and mtf_sell['quality'] in ['A+', 'A']:
                         quality = "💎 EXCELLENT"
-                        quality_color = "#28a745"
+                        quality_color = "#4facfe"
                     elif total_score >= 6:
                         quality = "⭐ FORT"
-                        quality_color = "#ffc107"
+                        quality_color = "#43e97b"
                     elif total_score >= 5:
                         quality = "✓ BON"
-                        quality_color = "#17a2b8"
+                        quality_color = "#fa709a"
                     else:
                         quality = "⚠️ MOYEN"
-                        quality_color = "#6c757d"
+                        quality_color = "#a8a8a8"
                     
                     warning = ""
                     if cs_sell['score'] == 0 and symbol in FOREX_PAIRS:
                         if quality in ["🔥 PREMIUM", "💎 EXCELLENT"]:
                             quality = "⭐ FORT"
-                            quality_color = "#ffc107"
+                            quality_color = "#43e97b"
                         warning = "⚠️ Divergence devise"
                     
                     signals.append({
@@ -822,103 +933,94 @@ def run_sniper_scan(api: OandaClient, min_score: int = 4) -> List[Dict]:
     status_text.empty()
     
     if skipped > 0:
-        st.caption(f"ℹ️ {skipped} actif(s) ignoré(s) (marché fermé ou données insuffisantes)")
+        st.caption(f"ℹ️ {skipped} actif(s) ignoré(s)")
     
     return signals
 
 # ==========================================
-# FONCTION D'AFFICHAGE DES SIGNAUX
+# AFFICHAGE DES SIGNAUX - DESIGN VIBRANT
 # ==========================================
 
 def display_signal(sig: Dict):
-    """Affiche un signal formaté avec composants Streamlit natifs - VERSION COLORÉE"""
+    """Affiche un signal avec design moderne et coloré"""
     if sig['type'] == 'BUY':
         icon = "🚀"
         emoji_direction = "📈"
-        color = "green"
+        card_gradient = "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
     else:
         icon = "📉"
         emoji_direction = "📉"
-        color = "red"
+        card_gradient = "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
     
-    # Calcul de l'heure locale (détection automatique du fuseau horaire du navigateur)
     signal_utc = sig['timestamp_utc']
-    
-    # Formater les heures
     time_utc_str = signal_utc.strftime("%H:%M:%S")
     date_str = signal_utc.strftime("%Y-%m-%d")
-    day_name = signal_utc.strftime("%A")  # Nom du jour (Monday, Tuesday, etc.)
     
-    # Calculer le temps écoulé RÉEL (depuis la bougie, pas depuis maintenant)
     now_utc = datetime.now(timezone.utc)
     elapsed = now_utc - signal_utc
     elapsed_seconds = int(elapsed.total_seconds())
     
-    # Déterminer si le marché est probablement ouvert (heuristique simple)
-    # Forex : fermé samedi/dimanche et vendredi 22h UTC - dimanche 22h UTC
-    is_weekend = signal_utc.weekday() >= 5  # Samedi = 5, Dimanche = 6
-    
-    # Si la bougie date de plus de 30 min, considérer comme "ancienne"
-    if elapsed_seconds > 1800:  # > 30 min
+    if elapsed_seconds > 1800:
         freshness = f"Bougie du {date_str} à {time_utc_str} UTC"
-        freshness_color = "⚪"
-        freshness_label = "(Marché probablement fermé)"
+        freshness_emoji = "⚪"
+        freshness_label = "(Marché fermé)"
     elif elapsed_seconds < 60:
         freshness = f"il y a {elapsed_seconds}s"
-        freshness_color = "🟢"
+        freshness_emoji = "🟢"
         freshness_label = ""
-    elif elapsed_seconds < 300:  # < 5 min
+    elif elapsed_seconds < 300:
         freshness = f"il y a {elapsed_seconds // 60}min"
-        freshness_color = "🟢"
+        freshness_emoji = "🟢"
         freshness_label = ""
-    elif elapsed_seconds < 900:  # < 15 min
+    elif elapsed_seconds < 900:
         freshness = f"il y a {elapsed_seconds // 60}min"
-        freshness_color = "🟡"
+        freshness_emoji = "🟡"
         freshness_label = ""
     else:
         freshness = f"il y a {elapsed_seconds // 60}min"
-        freshness_color = "🔴"
+        freshness_emoji = "🔴"
         freshness_label = "(Signal ancien)"
     
-    # Expander coloré avec tous les infos importantes dans le titre
     expander_title = f"{icon} **{sig['symbol']}** {emoji_direction} {sig['type']} • Score: **{sig['total_score']}/10** • {sig['quality']}"
     
     with st.expander(expander_title, expanded=True):
-        # Affichage de l'horodatage en haut - CLARIFICATION avec détection marché fermé
-        if freshness_label:
-            st.markdown(f"**🕐 Bougie M15 :** {date_str} à {time_utc_str} UTC • {freshness_color} *{freshness_label}*")
-        else:
-            st.markdown(f"**🕐 Bougie M15 :** {date_str} à {time_utc_str} UTC • {freshness_color} *{freshness}*")
+        # Header avec gradient
+        st.markdown(f"""
+        <div style="background: {card_gradient}; padding: 15px; border-radius: 12px; color: white; margin-bottom: 15px;">
+            <h3 style="margin: 0; color: white;">🕐 {date_str} à {time_utc_str} UTC</h3>
+            <p style="margin: 5px 0 0 0; font-size: 1.1em;">{freshness_emoji} {freshness} {freshness_label}</p>
+        </div>
+        """, unsafe_allow_html=True)
         
-        st.caption("⏱️ Heure de formation du signal (dernière bougie M15 close)")
-        
-        st.divider()
-        
-        # En-tête avec badges colorés
+        # Metrics row
         col1, col2, col3, col4, col5 = st.columns([1.5, 1, 1, 1, 1.5])
         
         with col1:
-            st.metric("💰 Prix", f"{sig['price']:.5f}", delta=None)
+            st.metric("💰 Prix", f"{sig['price']:.5f}")
         with col2:
             st.metric("📊 Score", f"{sig['total_score']}/10")
         with col3:
-            if sig['type'] == 'BUY':
-                st.success(f"**{sig['quality']}**")
-            else:
-                st.error(f"**{sig['quality']}**")
+            st.markdown(f"""
+            <div style="background: {sig['quality_color']}; padding: 10px; border-radius: 12px; text-align: center; color: white; font-weight: bold;">
+                {sig['quality']}
+            </div>
+            """, unsafe_allow_html=True)
         with col4:
-            st.info(f"**GPS: {sig['mtf']['quality']}**")
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 10px; border-radius: 12px; text-align: center; color: white; font-weight: bold;">
+                GPS: {sig['mtf']['quality']}
+            </div>
+            """, unsafe_allow_html=True)
         with col5:
             atr_display = f"{sig['atr_m15']:.5f}" if sig['atr_m15'] < 1 else f"{sig['atr_m15']:.2f}"
             st.metric("⚡ ATR M15", atr_display)
         
-        # Warning si divergence
         if sig.get('warning'):
             st.warning(f"⚠️ {sig['warning']}")
         
         st.divider()
         
-        # Section indicateurs avec emojis et couleurs
+        # Indicateurs
         col_left, col_right = st.columns(2)
         
         with col_left:
@@ -935,10 +1037,19 @@ def display_signal(sig: Dict):
             
             st.markdown(f"### 📈 HMA(20) - **{sig['hma']['score']}/2** pts")
             if sig['hma']['color'] == 'VERT':
-                st.success(f"🟢 **{sig['hma']['color']}**")
+                st.markdown("""
+                <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 15px; border-radius: 12px; color: white; font-weight: bold; text-align: center;">
+                    🟢 VERT
+                </div>
+                """, unsafe_allow_html=True)
             else:
-                st.error(f"🔴 **{sig['hma']['color']}**")
+                st.markdown("""
+                <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 15px; border-radius: 12px; color: white; font-weight: bold; text-align: center;">
+                    🔴 ROUGE
+                </div>
+                """, unsafe_allow_html=True)
             
+            st.write("")
             if sig['hma']['score'] >= 1:
                 st.success(sig['hma']['details'])
             else:
@@ -946,7 +1057,7 @@ def display_signal(sig: Dict):
         
         with col_right:
             st.markdown(f"### 🌍 MTF GPS - **{sig['mtf']['score']}/3** pts")
-            st.metric("Qualité GPS", sig['mtf']['quality'], delta=None)
+            st.metric("Qualité GPS", sig['mtf']['quality'])
             st.metric("Alignement", sig['mtf']['alignment'])
             
             if sig['mtf']['score'] >= 2:
@@ -970,8 +1081,8 @@ def display_signal(sig: Dict):
         
         st.divider()
         
-        # Analyse Multi-Timeframe en couleurs
-        st.markdown("### 📅 Analyse Multi-Timeframe Détaillée")
+        # MTF Analysis
+        st.markdown("### 📅 Analyse Multi-Timeframe")
         
         col_d1, col_h4, col_h1 = st.columns(3)
         
@@ -982,34 +1093,43 @@ def display_signal(sig: Dict):
             tf_data = sig['mtf']['analysis'][tf]
             
             with col:
-                # Emoji selon tendance
                 if tf_data['trend'] == 'Bullish':
-                    st.success(f"### 🟢 {tf}")
-                    st.markdown(f"**Bullish**")
+                    gradient = "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)"
+                    emoji = "🟢"
                 elif tf_data['trend'] == 'Bearish':
-                    st.error(f"### 🔴 {tf}")
-                    st.markdown(f"**Bearish**")
+                    gradient = "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+                    emoji = "🔴"
                 elif tf_data['trend'] == 'Retracement':
-                    st.warning(f"### 🟠 {tf}")
-                    st.markdown(f"**Retracement**")
+                    gradient = "linear-gradient(135deg, #fa709a 0%, #fee140 100%)"
+                    emoji = "🟠"
                 else:
-                    st.info(f"### ⚪ {tf}")
-                    st.markdown(f"**{tf_data['trend']}**")
+                    gradient = "linear-gradient(135deg, #a8a8a8 0%, #d3d3d3 100%)"
+                    emoji = "⚪"
+                
+                st.markdown(f"""
+                <div style="background: {gradient}; padding: 15px; border-radius: 12px; color: white; text-align: center; margin-bottom: 10px;">
+                    <h3 style="margin: 0; color: white;">{emoji} {tf}</h3>
+                    <p style="margin: 5px 0 0 0; font-weight: bold;">{tf_data['trend']}</p>
+                </div>
+                """, unsafe_allow_html=True)
                 
                 atr_display = f"{tf_data['atr']:.5f}" if tf_data['atr'] < 1 else f"{tf_data['atr']:.2f}"
                 st.caption(f"ATR: {atr_display}")
                 st.caption(f"{tf_data['details']}")
-        
-        st.write("")  # Espacement final
 
 # ==========================================
-# INTERFACE UTILISATEUR
+# INTERFACE PRINCIPALE
 # ==========================================
 
-st.title("⚡ Bluestar M15 Sniper Pro + Currency Strength")
-st.caption(f"Scanner GPS + Currency Strength | {len(ASSETS)} actifs | Score max: 10/10")
+st.title("⚡ Bluestar M15 Sniper Pro")
+st.markdown("""
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px;">
+    <h3 style="margin: 0; color: white;">🎯 Scanner GPS + Currency Strength</h3>
+    <p style="margin: 5px 0 0 0;">{} actifs • Score max: 10/10</p>
+</div>
+""".format(len(ASSETS)), unsafe_allow_html=True)
 
-# Réglage du score minimum
+# Controls
 col1, col2, col3 = st.columns([2, 2, 1])
 with col1:
     min_score = st.slider("Score minimum", 3, 10, 5, help="Score total sur 10 (RSI:3 + HMA:2 + MTF:3 + CS:2)")
@@ -1035,7 +1155,7 @@ if scan_button:
     
     st.divider()
     
-    # Métriques
+    # Metrics
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("Signaux", len(results))
@@ -1049,26 +1169,23 @@ if scan_button:
     st.divider()
     
     if not results:
-        st.info(f"😴 **Aucun signal ≥ {min_score}/10 points**")
-        st.caption("💡 Essaye de baisser le score minimum ou attends la prochaine opportunité")
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, #a8a8a8 0%, #d3d3d3 100%); padding: 20px; border-radius: 12px; color: white; text-align: center;">
+            <h3 style="margin: 0; color: white;">😴 Aucun signal ≥ {}/10 points</h3>
+            <p style="margin: 10px 0 0 0;">💡 Essaie de baisser le score minimum</p>
+        </div>
+        """.format(min_score), unsafe_allow_html=True)
     
     else:
-        # Tri par score décroissant
         results_sorted = sorted(results, key=lambda x: (x['total_score'], x['mtf']['quality'], x['currency_strength']['score']), reverse=True)
         
-        st.success(f"🎯 **{len(results)} signal(aux) détecté(s) !**")
-        
-        # Petit espacement avant les signaux
-        st.write("")
-        
-        # Script JS pour scroll automatique vers les résultats
-        st.markdown("""
-        <script>
-            window.parent.document.querySelector('[data-testid="stVerticalBlock"]').scrollIntoView({behavior: 'smooth', block: 'start'});
-        </script>
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); padding: 20px; border-radius: 12px; color: white; text-align: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: white;">🎯 {len(results)} signal(aux) détecté(s) !</h3>
+        </div>
         """, unsafe_allow_html=True)
         
         for sig in results_sorted:
             display_signal(sig)
     
-    st.caption(f"⏰ {datetime.now().strftime('%H:%M:%S')} | Score: RSI(3) + HMA(2) + MTF GPS(3) + Currency Strength(2) | 🔥 PREMIUM = 9-10/10")
+    st.caption(f"⏰ {datetime.now().strftime('%H:%M:%S')} | Score: RSI(3) + HMA(2) + MTF GPS(3) + CS(2) | 🔥 PREMIUM = 9-10/10")
